@@ -38,7 +38,7 @@
   <!-- ============ WHEAT ICON ============ -->
   <g transform="translate(60, 20)" filter="url(#glow)">
 
-    <!-- --- Left stalk --- -->
+    <!-- Left stalk -->
     <path d="M 35 150 Q 33 100, 36 50 Q 37 30, 36 20" stroke="url(#stem-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
     <path d="M 35 150 Q 33 100, 36 50 Q 37 30, 36 20" stroke="#7a6a2a" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
 
@@ -59,7 +59,7 @@
     <line x1="30" y1="3" x2="20" y2="-8" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
     <line x1="42" y1="3" x2="52" y2="-8" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
 
-    <!-- --- Right stalk --- -->
+    <!-- Right stalk -->
     <path d="M 85 150 Q 87 100, 84 50 Q 83 30, 84 20" stroke="url(#stem-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
     <path d="M 85 150 Q 87 100, 84 50 Q 83 30, 84 20" stroke="#7a6a2a" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
 
@@ -78,7 +78,7 @@
     <line x1="78" y1="3" x2="68" y2="-8" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
     <line x1="90" y1="3" x2="100" y2="-8" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
 
-    <!-- --- Center stalk (tallest) --- -->
+    <!-- Center stalk (tallest) -->
     <path d="M 60 150 Q 58 90, 61 40 Q 62 20, 61 10" stroke="url(#stem-grad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
     <path d="M 60 150 Q 58 90, 61 40 Q 62 20, 61 10" stroke="#b8860b" stroke-width="0.8" fill="none" stroke-linecap="round" opacity="0.3"/>
 
@@ -99,7 +99,7 @@
     <line x1="54" y1="-7" x2="44" y2="-18" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
     <line x1="68" y1="-7" x2="78" y2="-18" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
 
-    <!-- --- Bottom leaves at base --- -->
+    <!-- Bottom leaves at base -->
     <path d="M 35 145 Q 15 135, 5 145" stroke="#5a4a22" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
     <path d="M 85 145 Q 105 135, 115 145" stroke="#5a4a22" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
     <path d="M 60 148 Q 50 138, 40 148" stroke="#5a4a22" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
