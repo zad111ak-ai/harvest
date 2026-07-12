@@ -1,55 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
   <defs>
-    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#A78BFA"/>
-      <stop offset="100%" style="stop-color:#7C3AED"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
     </linearGradient>
-    <linearGradient id="g2" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#5B21B6"/>
-      <stop offset="100%" style="stop-color:#C4B5FD"/>
+    <linearGradient id="grain1" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#d4a017"/>
+      <stop offset="100%" stop-color="#f5d76e"/>
+    </linearGradient>
+    <linearGradient id="grain2" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#b8860b"/>
+      <stop offset="100%" stop-color="#e6b94d"/>
+    </linearGradient>
+    <linearGradient id="stem" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0%" stop-color="#5a4a2a"/>
+      <stop offset="100%" stop-color="#8b7a3a"/>
     </linearGradient>
   </defs>
 
-  <!-- Dark cosmic background -->
-  <circle cx="256" cy="256" r="230" fill="#0F0A1A"/>
+  <!-- Background -->
+  <rect width="800" height="200" rx="16" fill="url(#bg)"/>
 
-  <!-- Outer ring — the "crop circle" boundary -->
-  <circle cx="256" cy="256" r="190" fill="none" stroke="url(#g)" stroke-width="1.5" opacity="0.25"/>
+  <!-- Icon: 3 stylized wheat stalks forming H -->
+  <g transform="translate(60, 30)">
+    <!-- Left stalk -->
+    <line x1="30" y1="140" x2="30" y2="20" stroke="url(#stem)" stroke-width="3" stroke-linecap="round"/>
+    <!-- Left head: grain droplets -->
+    <ellipse cx="30" cy="18" rx="4" ry="6" fill="url(#grain1)"/>
+    <ellipse cx="26" cy="12" rx="3" ry="5" fill="url(#grain2)"/>
+    <ellipse cx="34" cy="12" rx="3" ry="5" fill="url(#grain2)"/>
+    <ellipse cx="22" cy="26" rx="3" ry="4" fill="url(#grain2)"/>
+    <ellipse cx="38" cy="26" rx="3" ry="4" fill="url(#grain2)"/>
+    <!-- Left awn (whiskers) -->
+    <line x1="30" y1="8" x2="22" y2="0" stroke="#f5d76e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="30" y1="8" x2="38" y2="0" stroke="#f5d76e" stroke-width="1.5" stroke-linecap="round"/>
 
-  <!-- 4 large circles forming the classic crop circle pattern -->
-  <circle cx="256" cy="108" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.6"/>
-  <circle cx="256" cy="404" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.6"/>
-  <circle cx="108" cy="256" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.6"/>
-  <circle cx="404" cy="256" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.6"/>
+    <!-- Right stalk -->
+    <line x1="74" y1="140" x2="74" y2="20" stroke="url(#stem)" stroke-width="3" stroke-linecap="round"/>
+    <ellipse cx="74" cy="18" rx="4" ry="6" fill="url(#grain1)"/>
+    <ellipse cx="70" cy="12" rx="3" ry="5" fill="url(#grain2)"/>
+    <ellipse cx="78" cy="12" rx="3" ry="5" fill="url(#grain2)"/>
+    <ellipse cx="66" cy="26" rx="3" ry="4" fill="url(#grain2)"/>
+    <ellipse cx="82" cy="26" rx="3" ry="4" fill="url(#grain2)"/>
+    <line x1="74" y1="8" x2="66" y2="0" stroke="#f5d76e" stroke-width="1.5" stroke-linecap="round"/>
+    <line x1="74" y1="8" x2="82" y2="0" stroke="#f5d76e" stroke-width="1.5" stroke-linecap="round"/>
 
-  <!-- Diagonal small circles -->
-  <circle cx="163" cy="163" r="35" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.35"/>
-  <circle cx="349" cy="163" r="35" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.35"/>
-  <circle cx="163" cy="349" r="35" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.35"/>
-  <circle cx="349" cy="349" r="35" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.35"/>
+    <!-- Crossbar (wavy line connecting stalks) -->
+    <path d="M20 78 Q35 68, 52 78 Q69 88, 84 78" stroke="url(#stem)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <!-- Small grain on crossbar -->
+    <ellipse cx="52" cy="72" rx="3" ry="4" fill="url(#grain1)"/>
 
-  <!-- Connecting lines — the "grid" of harvested data -->
-  <line x1="108" y1="256" x2="256" y2="108" stroke="#7C3AED" stroke-width="1" opacity="0.2"/>
-  <line x1="256" y1="108" x2="404" y2="256" stroke="#7C3AED" stroke-width="1" opacity="0.2"/>
-  <line x1="404" y1="256" x2="256" y2="404" stroke="#7C3AED" stroke-width="1" opacity="0.2"/>
-  <line x1="256" y1="404" x2="108" y2="256" stroke="#7C3AED" stroke-width="1" opacity="0.2"/>
+    <!-- Extra center stalk (subtle, mid) -->
+    <line x1="52" y1="140" x2="52" y2="40" stroke="url(#stem)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+    <ellipse cx="52" cy="38" rx="3" ry="4" fill="url(#grain1)" opacity="0.7"/>
 
-  <!-- Central symbol — the "eye" / collection point -->
-  <circle cx="256" cy="256" r="30" fill="none" stroke="url(#g)" stroke-width="2.5"/>
-  <circle cx="256" cy="256" r="8" fill="url(#g)"/>
+    <!-- Bottom stem decoration -->
+    <path d="M15 140 Q30 130, 52 138 Q74 146, 89 140" stroke="#5a4a2a" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+  </g>
 
-  <!-- Subtle glow around center -->
-  <circle cx="256" cy="256" r="16" fill="#A78BFA" opacity="0.08"/>
+  <!-- Wordmark: HARVEST -->
+  <g transform="translate(185, 55)">
+    <text x="0" y="0" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="64" font-weight="700" letter-spacing="6" fill="#f5d76e">
+      HARVEST
+    </text>
+    <text x="0" y="36" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="16" font-weight="400" letter-spacing="4" fill="#a08030" opacity="0.8">
+      WEB COLLECTION ENGINE
+    </text>
+  </g>
 
-  <!-- Data particles being drawn in -->
-  <circle cx="170" cy="170" r="3" fill="#C4B5FD" opacity="0.6"/>
-  <circle cx="342" cy="170" r="3" fill="#C4B5FD" opacity="0.6"/>
-  <circle cx="170" cy="342" r="3" fill="#C4B5FD" opacity="0.6"/>
-  <circle cx="342" cy="342" r="3" fill="#C4B5FD" opacity="0.6"/>
-
-  <!-- Trailing paths -- data flowing to center -->
-  <path d="M170 170 Q200 200 230 230" stroke="#C4B5FD" stroke-width="1" fill="none" opacity="0.25"/>
-  <path d="M342 170 Q312 200 282 230" stroke="#C4B5FD" stroke-width="1" fill="none" opacity="0.25"/>
-  <path d="M170 342 Q200 312 230 282" stroke="#C4B5FD" stroke-width="1" fill="none" opacity="0.25"/>
-  <path d="M342 342 Q312 312 282 282" stroke="#C4B5FD" stroke-width="1" fill="none" opacity="0.25"/>
+  <!-- Decorative line -->
+  <line x1="30" y1="178" x2="770" y2="178" stroke="#f5d76e" stroke-width="1" opacity="0.3"/>
 </svg>
