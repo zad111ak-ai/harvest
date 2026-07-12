@@ -6,60 +6,50 @@
     </linearGradient>
     <linearGradient id="g2" x1="0%" y1="100%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:#5B21B6"/>
-      <stop offset="100%" style="stop-color:#A78BFA"/>
+      <stop offset="100%" style="stop-color:#C4B5FD"/>
     </linearGradient>
   </defs>
 
-  <!-- Dirty page background -->
-  <rect width="512" height="512" fill="#F5F0E8"/>
+  <!-- Dark cosmic background -->
+  <circle cx="256" cy="256" r="230" fill="#0F0A1A"/>
 
-  <!-- Torn/stained paper edge -->
-  <rect x="0" y="0" width="512" height="512" fill="url(#g)" opacity="0.03"/>
+  <!-- Outer ring — the "crop circle" boundary -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="url(#g)" stroke-width="1.5" opacity="0.25"/>
 
-  <!-- Alien crop circle — outer ring -->
-  <circle cx="256" cy="256" r="180" fill="none" stroke="#7C3AED" stroke-width="2" opacity="0.3"/>
+  <!-- 4 large circles forming the classic crop circle pattern -->
+  <circle cx="256" cy="108" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.6"/>
+  <circle cx="256" cy="404" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.6"/>
+  <circle cx="108" cy="256" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.6"/>
+  <circle cx="404" cy="256" r="60" fill="none" stroke="url(#g)" stroke-width="2" opacity="0.6"/>
 
-  <!-- Main alien pattern — 4-point star (harvest signal) -->
-  <path d="M256 60 L270 200 L410 210 L290 270 L330 410 L256 310 L182 410 L222 270 L102 210 L242 200 Z"
-        fill="none" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Diagonal small circles -->
+  <circle cx="163" cy="163" r="35" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.35"/>
+  <circle cx="349" cy="163" r="35" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.35"/>
+  <circle cx="163" cy="349" r="35" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.35"/>
+  <circle cx="349" cy="349" r="35" fill="none" stroke="#A78BFA" stroke-width="1.5" opacity="0.35"/>
 
-  <!-- Inner circle -->
-  <circle cx="256" cy="256" r="60" fill="none" stroke="url(#g)" stroke-width="2"/>
+  <!-- Connecting lines — the "grid" of harvested data -->
+  <line x1="108" y1="256" x2="256" y2="108" stroke="#7C3AED" stroke-width="1" opacity="0.2"/>
+  <line x1="256" y1="108" x2="404" y2="256" stroke="#7C3AED" stroke-width="1" opacity="0.2"/>
+  <line x1="404" y1="256" x2="256" y2="404" stroke="#7C3AED" stroke-width="1" opacity="0.2"/>
+  <line x1="256" y1="404" x2="108" y2="256" stroke="#7C3AED" stroke-width="1" opacity="0.2"/>
 
-  <!-- Center dot — the "captured" data point -->
+  <!-- Central symbol — the "eye" / collection point -->
+  <circle cx="256" cy="256" r="30" fill="none" stroke="url(#g)" stroke-width="2.5"/>
   <circle cx="256" cy="256" r="8" fill="url(#g)"/>
 
-  <!-- Concentric rings (like water ripple / data waves) -->
-  <circle cx="256" cy="256" r="100" fill="none" stroke="#A78BFA" stroke-width="1" opacity="0.2"/>
-  <circle cx="256" cy="256" r="140" fill="none" stroke="#A78BFA" stroke-width="1" opacity="0.15"/>
+  <!-- Subtle glow around center -->
+  <circle cx="256" cy="256" r="16" fill="#A78BFA" opacity="0.08"/>
 
-  <!-- Small satellite dots — harvested data points -->
-  <circle cx="160" cy="160" r="4" fill="#7C3AED" opacity="0.4"/>
-  <circle cx="352" cy="160" r="4" fill="#7C3AED" opacity="0.4"/>
-  <circle cx="160" cy="352" r="4" fill="#7C3AED" opacity="0.4"/>
-  <circle cx="352" cy="352" r="4" fill="#7C3AED" opacity="0.4"/>
+  <!-- Data particles being drawn in -->
+  <circle cx="170" cy="170" r="3" fill="#C4B5FD" opacity="0.6"/>
+  <circle cx="342" cy="170" r="3" fill="#C4B5FD" opacity="0.6"/>
+  <circle cx="170" cy="342" r="3" fill="#C4B5FD" opacity="0.6"/>
+  <circle cx="342" cy="342" r="3" fill="#C4B5FD" opacity="0.6"/>
 
-  <!-- Connection lines — data being pulled in -->
-  <line x1="160" y1="160" x2="210" y2="210" stroke="#A78BFA" stroke-width="0.8" opacity="0.3"/>
-  <line x1="352" y1="160" x2="302" y2="210" stroke="#A78BFA" stroke-width="0.8" opacity="0.3"/>
-  <line x1="160" y1="352" x2="210" y2="302" stroke="#A78BFA" stroke-width="0.8" opacity="0.3"/>
-  <line x1="352" y1="352" x2="302" y2="302" stroke="#A78BFA" stroke-width="0.8" opacity="0.3"/>
-
-  <!-- Hand-drawn sketchy "notes" around the pattern (marginalia) -->
-  <path d="M80 60 Q90 55 100 65 Q110 75 120 65" stroke="#4B5563" stroke-width="1.5" fill="none" opacity="0.3"/>
-  <path d="M390 80 Q400 75 410 85" stroke="#4B5563" stroke-width="1.5" fill="none" opacity="0.3"/>
-  <path d="M70 380 Q80 370 90 385" stroke="#4B5563" stroke-width="1.5" fill="none" opacity="0.3"/>
-  <path d="M400 400 Q410 390 420 405" stroke="#4B5563" stroke-width="1.5" fill="none" opacity="0.3"/>
-
-  <!-- Coffee stain / age mark -->
-  <circle cx="420" cy="70" r="25" fill="#92400E" opacity="0.04"/>
-  <circle cx="420" cy="70" r="20" fill="#92400E" opacity="0.03"/>
-
-  <!-- Tiny "alien math" — harvest formula scribble -->
-  <text x="390" y="440" font-family="monospace" font-size="10" fill="#6B7280" opacity="0.25">
-    &lt;data/&gt;
-  </text>
-  <text x="60" y="440" font-family="monospace" font-size="10" fill="#6B7280" opacity="0.25">
-    ∑ = ∞
-  </text>
+  <!-- Trailing paths -- data flowing to center -->
+  <path d="M170 170 Q200 200 230 230" stroke="#C4B5FD" stroke-width="1" fill="none" opacity="0.25"/>
+  <path d="M342 170 Q312 200 282 230" stroke="#C4B5FD" stroke-width="1" fill="none" opacity="0.25"/>
+  <path d="M170 342 Q200 312 230 282" stroke="#C4B5FD" stroke-width="1" fill="none" opacity="0.25"/>
+  <path d="M342 342 Q312 312 282 282" stroke="#C4B5FD" stroke-width="1" fill="none" opacity="0.25"/>
 </svg>
