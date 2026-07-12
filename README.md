@@ -2,7 +2,7 @@
 
 Universal web collection engine — extract, monitor, and search any website through Cloudflare and anti-bot protections.
 
-![Logo](logo.svg)
+![Logo](https://raw.githubusercontent.com/zad111ak-ai/harvest/main/logo.svg)
 
 <div align="center">
 
