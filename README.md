@@ -4,7 +4,7 @@ Universal web collection engine — extract, monitor, crawl, and search any webs
 
 **Paid tools charge $50-200/mo for this. Harvest is free, open-source, and runs locally.**
 
-![Logo](./logo.svg)
+![Logo](./logo.svg) ![Animated Logo](./logo.gif)
 
 <div align="center">
 
