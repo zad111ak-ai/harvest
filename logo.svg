@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B"/>
+      <stop offset="100%" style="stop-color:#D97706"/>
+    </linearGradient>
+    <linearGradient id="g2" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#92400E"/>
+      <stop offset="100%" style="stop-color:#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="230" fill="#1C1917" stroke="url(#g)" stroke-width="4"/>
+  <!-- Wheat/sheaf shape -->
+  <path d="M160 340 Q180 260 220 210 Q240 190 256 180 Q272 190 292 210 Q332 260 352 340" 
+        fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round"/>
+  <!-- Wheat grains - left -->
+  <ellipse cx="200" cy="280" rx="6" ry="14" fill="url(#g)" transform="rotate(-30 200 280)"/>
+  <ellipse cx="185" cy="310" rx="5" ry="12" fill="url(#g)" transform="rotate(-50 185 310)"/>
+  <ellipse cx="220" cy="250" rx="5" ry="11" fill="url(#g2)" transform="rotate(-15 220 250)"/>
+  <ellipse cx="240" cy="235" rx="4" ry="10" fill="url(#g2)" transform="rotate(-5 240 235)"/>
+  <!-- Wheat grains - right -->
+  <ellipse cx="312" cy="280" rx="6" ry="14" fill="url(#g)" transform="rotate(30 312 280)"/>
+  <ellipse cx="327" cy="310" rx="5" ry="12" fill="url(#g)" transform="rotate(50 327 310)"/>
+  <ellipse cx="292" cy="250" rx="5" ry="11" fill="url(#g2)" transform="rotate(15 292 250)"/>
+  <ellipse cx="272" cy="235" rx="4" ry="10" fill="url(#g2)" transform="rotate(5 272 235)"/>
+  <!-- Central grain -->
+  <ellipse cx="256" cy="230" rx="5" ry="12" fill="#FBBF24"/>
+  <!-- Stem -->
+  <path d="M256 180 Q256 150 256 140" stroke="#F59E0B" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <!-- Leaf left -->
+  <path d="M246 155 Q225 145 220 160" stroke="#D97706" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Leaf right -->
+  <path d="M266 155 Q287 145 292 160" stroke="#D97706" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <!-- Web/net motif subtle overlay -->
+  <circle cx="256" cy="300" r="60" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.15"/>
+  <circle cx="256" cy="300" r="40" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.15"/>
+  <circle cx="256" cy="300" r="20" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.15"/>
+</svg>
