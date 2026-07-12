@@ -13,7 +13,7 @@ Universal web collection engine — extract, monitor, crawl, and search any webs
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/zad111ak-ai/harvest?logo=github)](https://github.com/zad111ak-ai/harvest/releases)
 [![GitHub stars](https://img.shields.io/github/stars/zad111ak-ai/harvest?style=social)](https://github.com/zad111ak-ai/harvest)
-[![BTC](https://img.shields.io/badge/donate-BTC-F7931A?logo=bitcoin)](https://solscan.io/account/bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j)
+[![BTC](https://img.shields.io/badge/donate-BTC-F7931A?logo=bitcoin)](https://blockchain.info/address/bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j)
 [![USDT](https://img.shields.io/badge/donate-USDT-26A17B?logo=tether)](https://tonviewer.com/UQAoI2i8P9-JeZhvGSUwKnymVyY5cb-1Rg7pdqoWMNena7DP)
 [![SOL](https://img.shields.io/badge/donate-SOL-9945FF?logo=solana)](https://solscan.io/account/99EtqBVTeF5UNp9a1oPi18iVXbXptTG7YQ6JeJvXMUJK)
 
