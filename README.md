@@ -4,6 +4,18 @@ Universal web collection engine — extract, monitor, and search any website thr
 
 ![Logo](logo.svg)
 
+<div align="center">
+
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python)](https://python.org)
+[![Scrapling](https://img.shields.io/badge/scrapling-0.4.9%2B-FF6B35?logo=python)](https://github.com/DoreenR/Scrapling)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/zad111ak-ai/harvest?style=social)](https://github.com/zad111ak-ai/harvest)
+[![BTC](https://img.shields.io/badge/donate-BTC-F7931A?logo=bitcoin)](https://solscan.io/account/bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j)
+[![USDT](https://img.shields.io/badge/donate-USDT-26A17B?logo=tether)](https://tonviewer.com/UQAoI2i8P9-JeZhvGSUwKnymVyY5cb-1Rg7pdqoWMNena7DP)
+[![SOL](https://img.shields.io/badge/donate-SOL-9945FF?logo=solana)](https://solscan.io/account/99EtqBVTeF5UNp9a1oPi18iVXbXptTG7YQ6JeJvXMUJK)
+
+</div>
+
 ## Why Harvest
 
 Every developer hits the same wall: you need data from a website, but it's behind Cloudflare. You try requests — blocked. You try Selenium — detected. You try API — doesn't exist.
