@@ -1,11 +1,10 @@
 """
 Core — Page scraping and content extraction.
 """
+
 import re
-import json
-from typing import Optional
+from typing import Any, Optional
 from datetime import datetime
-from urllib.parse import urlparse
 
 from .browser import BrowserSession
 
@@ -78,7 +77,10 @@ class Scraper:
         }
 
     async def scrape_many(
-        self, urls: list[str], selector: Optional[str] = None, extraction: str = "markdown"
+        self,
+        urls: list[str],
+        selector: Optional[str] = None,
+        extraction: str = "markdown",
     ) -> list[dict]:
         """Scrape multiple URLs concurrently."""
         import asyncio
@@ -88,7 +90,13 @@ class Scraper:
         output = []
         for i, r in enumerate(results):
             if isinstance(r, Exception):
-                output.append({"url": urls[i], "error": str(r), "timestamp": datetime.utcnow().isoformat()})
+                output.append(
+                    {
+                        "url": urls[i],
+                        "error": str(r),
+                        "timestamp": datetime.utcnow().isoformat(),
+                    }
+                )
             else:
                 output.append(r)
         return output

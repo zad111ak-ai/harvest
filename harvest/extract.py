@@ -9,11 +9,11 @@ Usage:
     harvest extract <url> --schema file://schema.json
     harvest extract <url> --schema '{"items": {"selector": ".product", "fields": {"name": "h2", "price": ".price"}}}'
 """
+
 import json
 import re
 from pathlib import Path
 from typing import Any, Optional
-from urllib.parse import urlparse
 
 from .core import Scraper
 
@@ -189,7 +189,9 @@ class SchemaExtractor:
             id_name = id_match.group(1)
 
         if id_name:
-            pattern = rf'<{tag or "[a-zA-Z0-9]+"}[^>]*id=["\']{re.escape(id_name)}["\'][^>]*>(.*?)</{tag or "[a-zA-Z0-9]+"}>'
+            pattern = (
+                rf'<{tag or "[a-zA-Z0-9]+"}[^>]*id=["\']{re.escape(id_name)}["\'][^>]*>(.*?)</{tag or "[a-zA-Z0-9]+"}>'
+            )
             texts = self._extract_all(html, pattern)
             if texts:
                 return [self._strip_html(t) for t in texts]
@@ -201,7 +203,7 @@ class SchemaExtractor:
                 return [self._strip_html(t) for t in texts]
 
         if tag:
-            pattern = rf'<{tag}(?:\s+[^>]*)?>(.*?)</{tag}>'
+            pattern = rf"<{tag}(?:\s+[^>]*)?>(.*?)</{tag}>"
             texts = self._extract_all(html, pattern)
             return [self._strip_html(t) for t in texts]
 
@@ -211,7 +213,6 @@ class SchemaExtractor:
         """Match CSS selector and return attribute values."""
         matches = self._match_selector_raw(html, selector)
         values = []
-        tag_pattern = re.compile(r"<([a-zA-Z0-9]+)")
         for match in matches:
             if attr == "href":
                 href_match = re.search(r'href=["\']([^"\']+)["\']', match)
@@ -233,6 +234,7 @@ class SchemaExtractor:
     def _match_selector_raw(self, html: str, selector: str) -> list[str]:
         """Match selector and return raw HTML of matching elements."""
         texts = self._match_selector(html, selector)
+
         # For raw HTML, we need the full element
         class MatchTracker:
             def __init__(self):
@@ -263,7 +265,7 @@ class SchemaExtractor:
         elif id_name:
             pattern = rf'(<{tag}[^>]*id=["\']{re.escape(id_name)}["\'][^>]*>.*?</{tag}>)'
         else:
-            pattern = rf'(<{tag}[^>]*>.*?</{tag}>)'
+            pattern = rf"(<{tag}[^>]*>.*?</{tag}>)"
 
         return re.findall(pattern, html, re.DOTALL)
 

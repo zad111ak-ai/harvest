@@ -1,6 +1,7 @@
 """
 Plugins — modular system for custom data sources and processors.
 """
+
 import importlib
 import inspect
 import logging

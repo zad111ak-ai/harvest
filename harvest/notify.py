@@ -8,9 +8,9 @@ Usage:
     harvest monitor https://site.com --notify telegram --token ... --chat ...
     harvest monitor https://site.com --notify webhook --url https://hook.n8n.io/...
 """
-import json
+
 import logging
-from typing import Any, Optional
+from typing import Optional
 
 logger = logging.getLogger("harvest.notify")
 
@@ -27,7 +27,8 @@ class Notifier:
         }
         cls = channel_map.get(channel.lower())
         if not cls:
-            raise ValueError(f"Unknown channel: {channel}. Options: {list(channel_map.keys())}")
+            logger.warning(f"Unknown channel: {channel}. Falling back to stdout.")
+            return StdoutNotifier(**kwargs)
         return cls(**kwargs)
 
     async def send(self, message: str, **kwargs):

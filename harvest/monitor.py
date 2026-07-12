@@ -2,10 +2,9 @@
 Monitor — Track changes in web pages over time.
 Detect diffs in pricing, content, layouts.
 """
+
 import json
-import time
 from pathlib import Path
-from datetime import datetime
 from typing import Optional
 
 from .core import Scraper
@@ -56,8 +55,8 @@ class ChangeWatcher:
                 # Simple line-based diff
                 prev_lines = prev_content.split("\n")
                 curr_lines = content.split("\n")
-                added = [l for l in curr_lines if l not in prev_lines]
-                removed = [l for l in prev_lines if l not in curr_lines]
+                added = [line for line in curr_lines if line not in prev_lines]
+                removed = [line for line in prev_lines if line not in curr_lines]
                 if added:
                     diff_text += f"[+] {len(added)} lines added\n"
                     diff_text += "\n".join(added[:10])

@@ -6,6 +6,7 @@ Usage:
     harvest contacts https://site.com --export contacts.csv
     harvest crawl https://site.com --export crawl.csv
 """
+
 import csv
 import io
 import json
@@ -35,6 +36,9 @@ class Exporter:
             for k in row.keys():
                 if k not in all_keys:
                     all_keys.append(k)
+
+        if not all_keys:
+            return ""
 
         output_buf = io.StringIO()
         writer = csv.DictWriter(output_buf, fieldnames=all_keys, extrasaction="ignore")
@@ -84,8 +88,7 @@ class Exporter:
             elif isinstance(v, list):
                 # Join list items as semicolon-separated string
                 items[new_key] = "; ".join(
-                    Exporter._flatten(item, "", sep) if isinstance(item, dict) else str(item)
-                    for item in v
+                    Exporter._flatten(item, "", sep) if isinstance(item, dict) else str(item) for item in v
                 )
             else:
                 items[new_key] = v

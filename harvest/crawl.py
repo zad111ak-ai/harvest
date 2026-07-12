@@ -9,6 +9,7 @@ Usage:
     harvest crawl https://site.com --sitemap-only
     harvest crawl https://site.com --same-domain --delay 1.0
 """
+
 import asyncio
 import re
 import time
@@ -114,15 +115,9 @@ class SiteCrawler:
 
                 # Discover more links if we haven't hit max
                 if len(pages) < max_pages:
-                    new_links = self._find_internal_links(
-                        result.get("content", ""), start_url, base_domain
-                    )
+                    new_links = self._find_internal_links(result.get("content", ""), start_url, base_domain)
                     for link in new_links:
-                        if (
-                            link not in self.visited
-                            and link not in to_visit
-                            and link != url
-                        ):
+                        if link not in self.visited and link not in to_visit and link != url:
                             if exclude_re and exclude_re.search(link):
                                 continue
                             if include_re and not include_re.search(link):
@@ -131,7 +126,11 @@ class SiteCrawler:
 
                 return result
             except Exception as e:
-                return {"url": url, "error": str(e), "timestamp": datetime.utcnow().isoformat()}
+                return {
+                    "url": url,
+                    "error": str(e),
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
 
         # Process queue
         i = 0
@@ -204,7 +203,11 @@ class SiteCrawler:
                 link = urljoin(base_url, link)
             try:
                 parsed = urlparse(link)
-                if parsed.netloc == domain or parsed.netloc == domain.replace("www.", "") or parsed.netloc == f"www.{domain}":
+                if (
+                    parsed.netloc == domain
+                    or parsed.netloc == domain.replace("www.", "")
+                    or parsed.netloc == f"www.{domain}"
+                ):
                     # Clean URL
                     clean = f"{parsed.scheme}://{parsed.netloc}{parsed.path.rstrip('/')}"
                     if clean and "#" not in clean:

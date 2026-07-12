@@ -1,10 +1,9 @@
 """
 Contacts — Extract emails and contact information from websites.
 """
+
 import re
-import asyncio
-from typing import Optional
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
 from .core import Scraper
 
@@ -31,7 +30,13 @@ class ContactCollector:
         Returns:
             dict with emails, social_links, pages_checked
         """
-        result = {"url": url, "emails": [], "social_links": [], "pages_checked": [], "error": None}
+        result = {
+            "url": url,
+            "emails": [],
+            "social_links": [],
+            "pages_checked": [],
+            "error": None,
+        }
 
         # First, scrape home page to find contact pages
         try:
@@ -81,7 +86,13 @@ class ContactCollector:
         for e in found:
             if not any(
                 x in e.lower()
-                for x in ["noreply", "no-reply", "donotreply", "example.com", "domain.com"]
+                for x in [
+                    "noreply",
+                    "no-reply",
+                    "donotreply",
+                    "example.com",
+                    "domain.com",
+                ]
             ):
                 filtered.append(e.lower())
         return list(set(filtered))
@@ -112,8 +123,13 @@ class ContactCollector:
                 text,
             )
             if domain:
-                links.append({"url": domain.group(1).rstrip(".)"), "platform": domains.get(match, match)})
-        return list({l["url"]: l for l in links}.values())
+                links.append(
+                    {
+                        "url": domain.group(1).rstrip(".)"),
+                        "platform": domains.get(match, match),
+                    }
+                )
+        return list({link["url"]: link for link in links}.values())
 
     def _base_url(self, url: str) -> str:
         parsed = urlparse(url)

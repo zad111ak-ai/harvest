@@ -43,7 +43,7 @@ And unlike paid tools (Browse AI $50/mo, Octoparse $80/mo, Apify $50/mo), Harves
 | Contact/email collection | ✅ | ❌ | ✅ | ❌ |
 | CSV export | ✅ | ✅ | ✅ | ✅ |
 | Proxy support | ✅ | ✅ | ✅ | ✅ |
-| API server mode | 🔜 | ✅ | ❌ | ✅ |
+|| API server mode | ✅ | ✅ | ❌ | ✅ |
 | **Price** | **Free** | $50/mo | $80/mo | $50/mo |
 
 ## Features
@@ -56,6 +56,12 @@ And unlike paid tools (Browse AI $50/mo, Octoparse $80/mo, Apify $50/mo), Harves
 | `harvest monitor --notify telegram` | Get **Telegram alerts** when pages change (competitor pricing, docs updates) |
 | `harvest crawl <url>` | **Full site crawl** with sitemap discovery, bulk export |
 | `harvest contacts <url>` | Collect emails, social links, contact pages from a website |
+| `harvest batch <file>` | **Batch process** hundreds of URLs with concurrency, rate limits, retries |
+| `harvest batch --sitemap <url>` | Fetch sitemap, extract URLs, and batch process them |
+| `harvest pipeline "scrape URL | extract SCHEMA | export FILE"` | **Chain operations** like Zapier/Make workflows |
+| `harvest serve` | **HTTP API server** — like ScrapingBee, self-hosted (FastAPI) |
+| `harvest config show` | View persistent configuration (~/.harvest/config.yaml) |
+| `harvest config set key value` | Set config values (proxy, Telegram tokens, etc.) |
 | `harvest search <query>` | Search across Hacker News, Reddit, and more |
 | `harvest screenshot <url>` | Capture page screenshot |
 | `harvest help` | List all commands |
@@ -215,13 +221,12 @@ asyncio.run(example())
 ## Roadmap
 
 - [x] v0.2.0 — Structured extraction (CSS schema), full site crawl, Telegram alerts, CSV export
-- [ ] HTTP API server mode (`harvest serve`)
+- [x] v0.3.0 — Batch processing, HTTP API server, pipeline chaining, persistent config, proxy rotator
 - [ ] Docker image
 - [ ] Chrome extension integration
 - [ ] Webhook notifications
 - [ ] More source plugins (HN, Reddit, GitHub, LinkedIn)
 - [ ] Scheduled monitoring cron helper
-- [ ] Proxy rotation from list
 - [ ] Airtable/Google Sheets export
 
 ## License

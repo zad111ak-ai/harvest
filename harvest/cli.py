@@ -18,12 +18,11 @@ Browse AI killer features:
   • Full site crawl with sitemap discovery
   • CSV export
 """
+
 import argparse
 import asyncio
 import json
-import sys
 from pathlib import Path
-from typing import Optional
 
 from . import __version__
 from .core import Scraper
@@ -33,6 +32,8 @@ from .extract import SchemaExtractor, load_schema
 from .crawl import SiteCrawler
 from .export import Exporter
 from .notify import Notifier
+from .config import Config
+from .batch import BatchProcessor
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -42,7 +43,7 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=(
             "Examples:\n"
             "  harvest scrape https://example.com\n"
-            "  harvest extract https://shop.com --schema '{\"title\":\"h1\",\"price\":\".price\"}'\n"
+            '  harvest extract https://shop.com --schema \'{"title":"h1","price":".price"}\'\n'
             "  harvest monitor https://competitor.com --notify telegram --token BOT --chat 123\n"
             "  harvest crawl https://docs.example.com --max-pages 100 --export docs.csv\n"
             "  harvest contacts https://company.com --export leads.csv\n"
@@ -61,29 +62,39 @@ def build_parser() -> argparse.ArgumentParser:
     p_scrape.add_argument("url", help="Page URL")
     p_scrape.add_argument("--selector", "-s", help="CSS selector for specific elements")
     p_scrape.add_argument(
-        "--output", "-o", choices=["json", "md", "txt", "csv"], default="json",
+        "--output",
+        "-o",
+        choices=["json", "md", "txt", "csv"],
+        default="json",
         help="Output format",
     )
 
     # ── extract ── Browse AI killer: structured data by schema ──
     p_extract = sub.add_parser(
         "extract",
-        help="Extract structured data using a CSS schema (e.g., '{\"title\":\"h1\",\"price\":\".price\"}')",
+        help='Extract structured data using a CSS schema (e.g., \'{"title":"h1","price":".price"}\')',
     )
     p_extract.add_argument("url", help="Page URL")
     p_extract.add_argument(
-        "--schema", "-s", required=True,
+        "--schema",
+        "-s",
+        required=True,
         help='JSON schema or file://schema.json. E.g., \'{"title":"h1","price":".price"}\'',
     )
 
     # ── monitor / check ──
     p_mon = sub.add_parser(
-        "monitor", help="Monitor a URL for changes with optional notifications",
+        "monitor",
+        help="Monitor a URL for changes with optional notifications",
         aliases=["check", "watch"],
     )
     p_mon.add_argument("url", help="Page URL")
     p_mon.add_argument("--selector", "-s", help="CSS selector for specific elements")
-    p_mon.add_argument("--notify", choices=["telegram", "webhook", "stdout"], help="Notification channel")
+    p_mon.add_argument(
+        "--notify",
+        choices=["telegram", "webhook", "stdout"],
+        help="Notification channel",
+    )
     p_mon.add_argument("--token", help="Telegram bot token (required for --notify telegram)")
     p_mon.add_argument("--chat", help="Telegram chat ID (required for --notify telegram)")
     p_mon.add_argument("--webhook-url", help="Webhook URL (required for --notify webhook)")
@@ -96,7 +107,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     # ── crawl ── like Scrapy, but one command ──
     p_crawl = sub.add_parser(
-        "crawl", help="Crawl entire site with sitemap discovery and bulk extraction",
+        "crawl",
+        help="Crawl entire site with sitemap discovery and bulk extraction",
     )
     p_crawl.add_argument("url", help="Start URL")
     p_crawl.add_argument("--max-pages", "-m", type=int, default=50, help="Maximum pages to crawl")
@@ -114,10 +126,68 @@ def build_parser() -> argparse.ArgumentParser:
     p_ss.add_argument("url", help="Page URL")
     p_ss.add_argument("--output", "-o", default="screenshot.png", help="Output PNG file")
 
+    # ── batch ──
+    p_batch = sub.add_parser(
+        "batch",
+        help="Process multiple URLs concurrently from a file or sitemap",
+    )
+    p_batch.add_argument(
+        "file",
+        nargs="?",
+        default=None,
+        help="File with URLs (one per line). Lines starting with # are skipped.",
+    )
+    p_batch.add_argument(
+        "--sitemap",
+        help="Sitemap URL instead of file (e.g., https://example.com/sitemap.xml)",
+    )
+    p_batch.add_argument("--concurrency", type=int, default=5, help="Max parallel requests")
+    p_batch.add_argument("--delay", type=float, default=0.5, help="Delay between batches (seconds)")
+    p_batch.add_argument(
+        "--rate-limit",
+        type=int,
+        default=0,
+        help="Max requests per minute (0 = unlimited)",
+    )
+    p_batch.add_argument("--selector", "-s", help="CSS selector for content extraction")
+    p_batch.add_argument(
+        "--extract",
+        metavar="SCHEMA",
+        help='Structured extraction schema as JSON (e.g., \'{"title":"h1","price":".price"}\')',
+    )
+    p_batch.add_argument(
+        "--export",
+        metavar="FILE",
+        help="Export results to file (e.g., results.json, results.csv)",
+    )
+    p_batch.add_argument("--retries", type=int, default=3, help="Retry attempts per URL")
+
+    # ── serve ──
+    p_serve = sub.add_parser(
+        "serve",
+        help="Start HTTP API server (like ScrapingBee/Browse AI API)",
+    )
+    p_serve.add_argument("--host", default=None, help="Server host (config or 0.0.0.0)")
+    p_serve.add_argument("--port", type=int, default=None, help="Server port (config or 8590)")
+
+    # ── config ──
+    p_config = sub.add_parser(
+        "config",
+        help="Manage Harvest configuration",
+    )
+    p_config_sub = p_config.add_subparsers(dest="config_cmd")
+    p_config_get = p_config_sub.add_parser("get", help="Get a config value")
+    p_config_get.add_argument("keys", nargs="+", help="Config key path (e.g., proxy url)")
+    p_config_set = p_config_sub.add_parser("set", help="Set a config value")
+    p_config_set.add_argument("keys", nargs="+", help="Config key path (e.g., proxy url)")
+    p_config_set.add_argument("value", help="Value to set")
+    p_config_sub.add_parser("show", help="Show full config")
+
     return parser
 
 
 # ── Command handlers ──
+
 
 async def cmd_scrape(args):
     scraper = Scraper(proxy=args.proxy, headless=not args.no_headless)
@@ -163,10 +233,7 @@ async def cmd_monitor(args):
                 chat_id=args.chat or "",
                 url=args.webhook_url or "",
             )
-            message = (
-                f"🔔 <b>Change detected on:</b> {args.url}\n\n"
-                f"{result.get('diff_text', '')[:1000]}"
-            )
+            message = f"🔔 <b>Change detected on:</b> {args.url}\n\n{result.get('diff_text', '')[:1000]}"
             sent = await notifier.send(message)
             if sent:
                 print(f"[✓] Notification sent via {args.notify}")
@@ -216,10 +283,7 @@ async def cmd_crawl(args):
             "total_discovered": result["total_discovered"],
             "sitemap_urls": result.get("sitemap_urls", []),
             "timestamp": result["timestamp"],
-            "pages": [
-                {"url": p.get("url", ""), "title": p.get("title", "")}
-                for p in result.get("pages", [])
-            ],
+            "pages": [{"url": p.get("url", ""), "title": p.get("title", "")} for p in result.get("pages", [])],
         }
         print(json.dumps(summary, indent=2, ensure_ascii=False))
 
@@ -234,14 +298,10 @@ async def cmd_search(args):
     tasks = []
 
     if args.source in ("all", "hn"):
-        tasks.append(
-            scraper.scrape(f"https://hn.algolia.com/api/v1/search?query={query}&hitsPerPage=10")
-        )
+        tasks.append(scraper.scrape(f"https://hn.algolia.com/api/v1/search?query={query}&hitsPerPage=10"))
 
     if args.source in ("all", "reddit"):
-        tasks.append(
-            scraper.scrape(f"https://www.reddit.com/search/?q={query}", extraction="html")
-        )
+        tasks.append(scraper.scrape(f"https://www.reddit.com/search/?q={query}", extraction="html"))
 
     outputs = await asyncio.gather(*tasks, return_exceptions=True)
     for out in outputs:
@@ -249,7 +309,13 @@ async def cmd_search(args):
             continue
         results.append(out)
 
-    print(json.dumps({"query": args.query, "source": args.source, "results": results}, indent=2, ensure_ascii=False))
+    print(
+        json.dumps(
+            {"query": args.query, "source": args.source, "results": results},
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
 
 
 async def cmd_screenshot(args):
@@ -259,20 +325,97 @@ async def cmd_screenshot(args):
     headless = not args.no_headless
     async with BrowserSession(proxy=args.proxy, headless=headless) as session:
         # Navigate and use Scrapling's screenshot capability if available
-        resp = await session.fetch(args.url, extraction_type="html")
+        _ = await session.fetch(args.url, extraction_type="html")
         output_path = Path(args.output)
 
     # If the session has a screenshot method, it would be used here.
     # Scrapling's low-level Playwright access:
     # session._session.page.screenshot(path=str(output_path))
-    print(json.dumps({
-        "url": args.url,
-        "output": str(output_path) if output_path.exists() else args.output,
-        "note": "Screenshot saved. For full browser screenshot, use the Scrapling API directly.",
-    }, indent=2, ensure_ascii=False))
+    print(
+        json.dumps(
+            {
+                "url": args.url,
+                "output": str(output_path) if output_path.exists() else args.output,
+                "note": "Screenshot saved. For full browser screenshot, use the Scrapling API directly.",
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
+
+
+async def cmd_batch(args):
+    """Process URLs in batch from file or sitemap."""
+    processor = BatchProcessor(
+        concurrency=args.concurrency,
+        delay=args.delay,
+        rate_limit=args.rate_limit,
+        retries=args.retries,
+        proxy=args.proxy,
+        headless=not args.no_headless,
+    )
+
+    extract_schema = None
+    if args.extract:
+        from .extract import load_schema
+
+        extract_schema = load_schema(args.extract)
+
+    if args.sitemap:
+        result = await processor.process_sitemap(
+            args.sitemap,
+            selector=args.selector,
+            extract_schema=extract_schema,
+        )
+    elif args.file:
+        result = await processor.process_file(
+            args.file,
+            selector=args.selector,
+            extract_schema=extract_schema,
+        )
+    else:
+        print("Error: provide either a URL file or --sitemap")
+        return
+
+    processor.print_summary(result)
+
+    if args.export:
+        fmt = "csv" if args.export.endswith(".csv") else "json"
+        path = processor.export_results(result, args.export, fmt=fmt)
+        print(f"   📁 Exported to {path}")
+
+
+async def cmd_serve(args):
+    """Start the HTTP API server."""
+    from .server import run_server
+
+    cfg = Config()
+    host = args.host or cfg.get("server", "host", default="0.0.0.0")
+    port = args.port or cfg.get("server", "port", default=8590)
+    run_server(config=cfg, host=host, port=port)
+
+
+async def cmd_config(args):
+    """Manage Harvest configuration."""
+    cfg = Config()
+
+    if args.config_cmd == "show":
+        import json
+
+        print(json.dumps(cfg.data, indent=2, ensure_ascii=False))
+    elif args.config_cmd == "get":
+        val = cfg.get(*args.keys)
+        print(val if val is not None else "(not set)")
+    elif args.config_cmd == "set":
+        cfg.set(*args.keys, value=args.value)
+        path_str = " ".join(args.keys)
+        print(f"✓ {path_str} = {args.value}")
+    else:
+        print("Usage: harvest config [show|get keys...|set keys... value]")
 
 
 # ── Main dispatcher ──
+
 
 def main():
     parser = build_parser()
@@ -288,6 +431,9 @@ def main():
         "crawl": cmd_crawl,
         "search": cmd_search,
         "screenshot": cmd_screenshot,
+        "batch": cmd_batch,
+        "serve": cmd_serve,
+        "config": cmd_config,
     }
 
     cmd_fn = cmd_map.get(args.command)

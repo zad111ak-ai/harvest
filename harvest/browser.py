@@ -3,6 +3,7 @@ BrowserSession — Reusable Scrapling browser session with Cloudflare bypass.
 
 One browser, many pages. Proxy support. Human-like behavior.
 """
+
 import asyncio
 from typing import Optional, Callable, Any
 
@@ -37,9 +38,7 @@ class BrowserSession:
         max_pages: int = 3,
     ):
         if AsyncStealthySession is None:
-            raise ImportError(
-                "scrapling is not installed. Install it with: pip install scrapling"
-            )
+            raise ImportError("scrapling is not installed. Install it with: pip install scrapling")
         self._session = AsyncStealthySession(
             max_pages=max_pages,
             headless=headless,
