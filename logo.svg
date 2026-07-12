@@ -2,73 +2,146 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 200" width="800" height="200">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1a1a2e"/>
-      <stop offset="100%" stop-color="#16213e"/>
+      <stop offset="0%" stop-color="#0f0f1a"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
     </linearGradient>
-    <linearGradient id="grain1" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%" stop-color="#d4a017"/>
-      <stop offset="100%" stop-color="#f5d76e"/>
-    </linearGradient>
-    <linearGradient id="grain2" x1="0" y1="1" x2="0" y2="0">
+    <linearGradient id="gold-grad" x1="0" y1="1" x2="0.5" y2="0">
       <stop offset="0%" stop-color="#b8860b"/>
-      <stop offset="100%" stop-color="#e6b94d"/>
+      <stop offset="40%" stop-color="#d4a017"/>
+      <stop offset="80%" stop-color="#f5d76e"/>
+      <stop offset="100%" stop-color="#fff4b8"/>
     </linearGradient>
-    <linearGradient id="stem" x1="0" y1="1" x2="0" y2="0">
-      <stop offset="0%" stop-color="#5a4a2a"/>
-      <stop offset="100%" stop-color="#8b7a3a"/>
+    <linearGradient id="gold-grad2" x1="0" y1="1" x2="0.5" y2="0">
+      <stop offset="0%" stop-color="#a0750a"/>
+      <stop offset="50%" stop-color="#c8951e"/>
+      <stop offset="100%" stop-color="#e6c44d"/>
     </linearGradient>
+    <linearGradient id="stem-grad" x1="0" y1="1" x2="0.5" y2="0">
+      <stop offset="0%" stop-color="#4a3e1a"/>
+      <stop offset="100%" stop-color="#7a6a2a"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
   </defs>
 
   <!-- Background -->
-  <rect width="800" height="200" rx="16" fill="url(#bg)"/>
+  <rect width="800" height="200" rx="20" fill="url(#bg)"/>
 
-  <!-- Icon: 3 stylized wheat stalks forming H -->
-  <g transform="translate(60, 30)">
-    <!-- Left stalk -->
-    <line x1="30" y1="140" x2="30" y2="20" stroke="url(#stem)" stroke-width="3" stroke-linecap="round"/>
-    <!-- Left head: grain droplets -->
-    <ellipse cx="30" cy="18" rx="4" ry="6" fill="url(#grain1)"/>
-    <ellipse cx="26" cy="12" rx="3" ry="5" fill="url(#grain2)"/>
-    <ellipse cx="34" cy="12" rx="3" ry="5" fill="url(#grain2)"/>
-    <ellipse cx="22" cy="26" rx="3" ry="4" fill="url(#grain2)"/>
-    <ellipse cx="38" cy="26" rx="3" ry="4" fill="url(#grain2)"/>
-    <!-- Left awn (whiskers) -->
-    <line x1="30" y1="8" x2="22" y2="0" stroke="#f5d76e" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="30" y1="8" x2="38" y2="0" stroke="#f5d76e" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Subtle radial light from center -->
+  <ellipse cx="400" cy="100" rx="350" ry="80" fill="#d4a017" opacity="0.03"/>
 
-    <!-- Right stalk -->
-    <line x1="74" y1="140" x2="74" y2="20" stroke="url(#stem)" stroke-width="3" stroke-linecap="round"/>
-    <ellipse cx="74" cy="18" rx="4" ry="6" fill="url(#grain1)"/>
-    <ellipse cx="70" cy="12" rx="3" ry="5" fill="url(#grain2)"/>
-    <ellipse cx="78" cy="12" rx="3" ry="5" fill="url(#grain2)"/>
-    <ellipse cx="66" cy="26" rx="3" ry="4" fill="url(#grain2)"/>
-    <ellipse cx="82" cy="26" rx="3" ry="4" fill="url(#grain2)"/>
-    <line x1="74" y1="8" x2="66" y2="0" stroke="#f5d76e" stroke-width="1.5" stroke-linecap="round"/>
-    <line x1="74" y1="8" x2="82" y2="0" stroke="#f5d76e" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- ============ WHEAT ICON ============ -->
+  <g transform="translate(60, 20)" filter="url(#glow)">
 
-    <!-- Crossbar (wavy line connecting stalks) -->
-    <path d="M20 78 Q35 68, 52 78 Q69 88, 84 78" stroke="url(#stem)" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <!-- Small grain on crossbar -->
-    <ellipse cx="52" cy="72" rx="3" ry="4" fill="url(#grain1)"/>
+    <!-- --- Left stalk --- -->
+    <path d="M 35 150 Q 33 100, 36 50 Q 37 30, 36 20" stroke="url(#stem-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 35 150 Q 33 100, 36 50 Q 37 30, 36 20" stroke="#7a6a2a" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
 
-    <!-- Extra center stalk (subtle, mid) -->
-    <line x1="52" y1="140" x2="52" y2="40" stroke="url(#stem)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
-    <ellipse cx="52" cy="38" rx="3" ry="4" fill="url(#grain1)" opacity="0.7"/>
+    <!-- Left head grains (top to bottom) -->
+    <ellipse cx="36" cy="18" rx="5" ry="7" fill="url(#gold-grad)" transform="rotate(-5 36 18)"/>
+    <ellipse cx="30" cy="10" rx="4" ry="6" fill="url(#gold-grad2)" transform="rotate(-12 30 10)"/>
+    <ellipse cx="42" cy="10" rx="4" ry="6" fill="url(#gold-grad2)" transform="rotate(12 42 10)"/>
+    <ellipse cx="26" cy="26" rx="4" ry="5" fill="url(#gold-grad2)" transform="rotate(-20 26 26)"/>
+    <ellipse cx="46" cy="26" rx="4" ry="5" fill="url(#gold-grad2)" transform="rotate(20 46 26)"/>
+    <ellipse cx="22" cy="34" rx="3.5" ry="5" fill="url(#gold-grad2)" transform="rotate(-25 22 34)"/>
+    <ellipse cx="50" cy="34" rx="3.5" ry="5" fill="url(#gold-grad2)" transform="rotate(25 50 34)"/>
+    <ellipse cx="20" cy="42" rx="3" ry="4" fill="url(#gold-grad2)" opacity="0.7" transform="rotate(-20 20 42)"/>
+    <ellipse cx="52" cy="42" rx="3" ry="4" fill="url(#gold-grad2)" opacity="0.7" transform="rotate(20 52 42)"/>
 
-    <!-- Bottom stem decoration -->
-    <path d="M15 140 Q30 130, 52 138 Q74 146, 89 140" stroke="#5a4a2a" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <!-- Left awns (whiskers) -->
+    <line x1="36" y1="7" x2="24" y2="-5" stroke="#f5d76e" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+    <line x1="36" y1="7" x2="48" y2="-5" stroke="#f5d76e" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+    <line x1="30" y1="3" x2="20" y2="-8" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+    <line x1="42" y1="3" x2="52" y2="-8" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- --- Right stalk --- -->
+    <path d="M 85 150 Q 87 100, 84 50 Q 83 30, 84 20" stroke="url(#stem-grad)" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 85 150 Q 87 100, 84 50 Q 83 30, 84 20" stroke="#7a6a2a" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
+
+    <!-- Right head grains -->
+    <ellipse cx="84" cy="18" rx="5" ry="7" fill="url(#gold-grad)" transform="rotate(5 84 18)"/>
+    <ellipse cx="78" cy="10" rx="4" ry="6" fill="url(#gold-grad2)" transform="rotate(-12 78 10)"/>
+    <ellipse cx="90" cy="10" rx="4" ry="6" fill="url(#gold-grad2)" transform="rotate(12 90 10)"/>
+    <ellipse cx="74" cy="26" rx="4" ry="5" fill="url(#gold-grad2)" transform="rotate(-20 74 26)"/>
+    <ellipse cx="94" cy="26" rx="4" ry="5" fill="url(#gold-grad2)" transform="rotate(20 94 26)"/>
+    <ellipse cx="70" cy="34" rx="3.5" ry="5" fill="url(#gold-grad2)" transform="rotate(-25 70 34)"/>
+    <ellipse cx="98" cy="34" rx="3.5" ry="5" fill="url(#gold-grad2)" transform="rotate(25 98 34)"/>
+
+    <!-- Right awns -->
+    <line x1="84" y1="7" x2="72" y2="-5" stroke="#f5d76e" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+    <line x1="84" y1="7" x2="96" y2="-5" stroke="#f5d76e" stroke-width="1" stroke-linecap="round" opacity="0.8"/>
+    <line x1="78" y1="3" x2="68" y2="-8" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+    <line x1="90" y1="3" x2="100" y2="-8" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- --- Center stalk (tallest) --- -->
+    <path d="M 60 150 Q 58 90, 61 40 Q 62 20, 61 10" stroke="url(#stem-grad)" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M 60 150 Q 58 90, 61 40 Q 62 20, 61 10" stroke="#b8860b" stroke-width="0.8" fill="none" stroke-linecap="round" opacity="0.3"/>
+
+    <!-- Center head grains (more dense) -->
+    <ellipse cx="61" cy="8" rx="5.5" ry="8" fill="url(#gold-grad)"/>
+    <ellipse cx="54" cy="-1" rx="4.5" ry="6.5" fill="url(#gold-grad2)" transform="rotate(-14 54 -1)"/>
+    <ellipse cx="68" cy="-1" rx="4.5" ry="6.5" fill="url(#gold-grad2)" transform="rotate(14 68 -1)"/>
+    <ellipse cx="49" cy="16" rx="4.5" ry="5.5" fill="url(#gold-grad2)" transform="rotate(-22 49 16)"/>
+    <ellipse cx="73" cy="16" rx="4.5" ry="5.5" fill="url(#gold-grad2)" transform="rotate(22 73 16)"/>
+    <ellipse cx="46" cy="25" rx="4" ry="5" fill="url(#gold-grad2)" opacity="0.85" transform="rotate(-25 46 25)"/>
+    <ellipse cx="76" cy="25" rx="4" ry="5" fill="url(#gold-grad2)" opacity="0.85" transform="rotate(25 76 25)"/>
+    <ellipse cx="44" cy="34" rx="3.5" ry="4.5" fill="url(#gold-grad2)" opacity="0.7" transform="rotate(-20 44 34)"/>
+    <ellipse cx="78" cy="34" rx="3.5" ry="4.5" fill="url(#gold-grad2)" opacity="0.7" transform="rotate(20 78 34)"/>
+
+    <!-- Center awns -->
+    <line x1="61" y1="-3" x2="48" y2="-15" stroke="#f5d76e" stroke-width="1" stroke-linecap="round" opacity="0.9"/>
+    <line x1="61" y1="-3" x2="74" y2="-15" stroke="#f5d76e" stroke-width="1" stroke-linecap="round" opacity="0.9"/>
+    <line x1="54" y1="-7" x2="44" y2="-18" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+    <line x1="68" y1="-7" x2="78" y2="-18" stroke="#e6c44d" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+
+    <!-- --- Bottom leaves at base --- -->
+    <path d="M 35 145 Q 15 135, 5 145" stroke="#5a4a22" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M 85 145 Q 105 135, 115 145" stroke="#5a4a22" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.5"/>
+    <path d="M 60 148 Q 50 138, 40 148" stroke="#5a4a22" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+    <path d="M 60 148 Q 70 138, 80 148" stroke="#5a4a22" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.4"/>
+
+    <!-- Glowing dot accents on center head -->
+    <ellipse cx="61" cy="8" rx="2" ry="3" fill="#fff4b8" opacity="0.5"/>
   </g>
 
-  <!-- Wordmark: HARVEST -->
-  <g transform="translate(185, 55)">
-    <text x="0" y="0" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="64" font-weight="700" letter-spacing="6" fill="#f5d76e">
-      HARVEST
-    </text>
-    <text x="0" y="36" font-family="'Segoe UI', 'Helvetica Neue', Arial, sans-serif" font-size="16" font-weight="400" letter-spacing="4" fill="#a08030" opacity="0.8">
+  <!-- ============ WORDMARK ============ -->
+  <g transform="translate(190, 48)">
+    <!-- H -->
+    <path d="M 0 24 L 0 0 L 8 0 L 8 24" stroke="#f5d76e" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 20 24 L 20 0 L 28 0 L 28 24" stroke="#f5d76e" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M 0 12 L 28 12" stroke="#f5d76e" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- A -->
+    <path d="M 38 24 L 46 6 L 54 24" stroke="#f5d76e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M 42 16 L 50 16" stroke="#f5d76e" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+    <!-- R -->
+    <path d="M 42 36 L 64 36 L 64 24 L 52 24 L 64 12" stroke="#f5d76e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- V -->
+    <path d="M 74 12 L 82 24 L 90 12" stroke="#f5d76e" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- E -->
+    <path d="M 100 24 L 100 6 L 120 6 M 100 14 L 116 14 M 100 24 L 120 24" stroke="#f5d76e" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- S -->
+    <path d="M 138 8 Q 140 4, 146 4 Q 152 4, 154 10 Q 154 15, 148 17 Q 136 20, 136 28 Q 136 34, 142 36 Q 148 36, 152 32" stroke="#f5d76e" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- T -->
+    <path d="M 162 4 L 182 4 M 172 4 L 172 24" stroke="#f5d76e" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- Subtitle -->
+    <text x="48" y="54" font-family="'SF Mono', 'Cascadia Code', 'JetBrains Mono', monospace" font-size="12" font-weight="400" letter-spacing="3" fill="#a08030" opacity="0.7">
       WEB COLLECTION ENGINE
     </text>
   </g>
 
-  <!-- Decorative line -->
-  <line x1="30" y1="178" x2="770" y2="178" stroke="#f5d76e" stroke-width="1" opacity="0.3"/>
+  <!-- Bottom accent line -->
+  <line x1="40" y1="180" x2="760" y2="180" stroke="url(#gold-grad)" stroke-width="1.5" opacity="0.25"/>
+  <line x1="40" y1="182" x2="760" y2="182" stroke="url(#gold-grad)" stroke-width="0.5" opacity="0.1"/>
 </svg>

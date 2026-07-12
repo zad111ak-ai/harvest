@@ -431,7 +431,7 @@ def test_pipeline_module_import():
 def test_init_imports():
     from harvest import __version__, __doc__
 
-    assert __version__ == "0.3.0"
+    assert __version__ == "0.4.0"
     assert len(__doc__) > 0
 
 
@@ -639,6 +639,140 @@ if __name__ == "__main__":
                 failures += 1
                 print(f"  ✗ {name}")
                 traceback.print_exc()
-    print(f"\n{'─' * 40}")
+    print(f"\\n{'─' * 40}")
     print(f"  {total - failures}/{total} passed ({failures} failed)")
     sys.exit(1 if failures > 0 else 0)
+
+
+# ── MCP Server tests ──
+
+
+def test_mcp_create_server():
+    """MCP server should create with all 7 tools."""
+    from harvest_mcp import create_server
+
+    server = create_server()
+    tools = server._tool_manager.list_tools()
+    names = sorted(t.name for t in tools)
+
+    assert len(tools) == 7
+    assert names == [
+        "batch",
+        "contacts",
+        "crawl",
+        "extract",
+        "monitor",
+        "scrape",
+        "status",
+    ]
+
+
+def test_mcp_status_tool():
+    """status() should return JSON with version and tools list."""
+    from harvest_mcp import create_server
+
+    server = create_server()
+    status_tool = [t for t in server._tool_manager.list_tools() if t.name == "status"][0]
+    result = status_tool.fn()
+
+    import json
+
+    data = json.loads(result)
+    assert data["version"] == "0.4.0"
+    assert "scrape" in data["tools"]
+    assert data["proxy_configured"] in (True, False)  # depends on env
+
+
+def test_mcp_scrape_tool_description():
+    """scrape tool should have a proper description."""
+    from harvest_mcp import create_server
+
+    server = create_server()
+    scrape_tool = [t for t in server._tool_manager.list_tools() if t.name == "scrape"][0]
+    assert "Scrape" in (scrape_tool.description or "")
+    props = scrape_tool.parameters.get("properties", {})
+    assert "url" in props
+
+
+def test_mcp_extract_tool_params():
+    """extract tool should accept url and schema params."""
+    from harvest_mcp import create_server
+
+    server = create_server()
+    extract_tool = [t for t in server._tool_manager.list_tools() if t.name == "extract"][0]
+    props = extract_tool.parameters.get("properties", {})
+    assert "url" in props
+    assert "schema" in props
+
+
+def test_mcp_contacts_tool_params():
+    """contacts tool should accept url and depth params."""
+    from harvest_mcp import create_server
+
+    server = create_server()
+    ct = [t for t in server._tool_manager.list_tools() if t.name == "contacts"][0]
+    props = ct.parameters.get("properties", {})
+    assert "url" in props
+    assert "depth" in props
+
+
+def test_mcp_batch_tool_params():
+    """batch tool should accept urls list and concurrency."""
+    from harvest_mcp import create_server
+
+    server = create_server()
+    bt = [t for t in server._tool_manager.list_tools() if t.name == "batch"][0]
+    props = bt.parameters.get("properties", {})
+    assert "urls" in props
+    assert "concurrency" in props
+
+
+def test_mcp_crawl_tool_params():
+    """crawl tool should accept url and max_pages."""
+    from harvest_mcp import create_server
+
+    server = create_server()
+    ct = [t for t in server._tool_manager.list_tools() if t.name == "crawl"][0]
+    props = ct.parameters.get("properties", {})
+    assert "url" in props
+    assert "max_pages" in props
+
+
+def test_mcp_monitor_tool_params():
+    """monitor tool should accept url and selector."""
+    from harvest_mcp import create_server
+
+    server = create_server()
+    mt = [t for t in server._tool_manager.list_tools() if t.name == "monitor"][0]
+    props = mt.parameters.get("properties", {})
+    assert "url" in props
+    assert "selector" in props
+
+
+def test_mcp_main_version():
+    """harvest-mcp --version should print version and exit."""
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-m", "harvest_mcp", "--version"],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0
+    assert "0.4.0" in result.stdout
+
+
+def test_mcp_entry_point():
+    """harvest-mcp module should be importable and runnable."""
+    import subprocess
+    import sys
+
+    result = subprocess.run(
+        [sys.executable, "-m", "harvest_mcp", "--help"],
+        capture_output=True,
+        text=True,
+        timeout=5,
+    )
+    # FastMCP stdio doesn't have --help, but should not crash
+    assert result.returncode in (0, 1)

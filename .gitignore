@@ -5,3 +5,7 @@ __pycache__/
 dist/
 build/
 ~/.harvest/
+trends.txt
+trends_urls.txt
+extract_links.py
+config.yaml

@@ -2,7 +2,7 @@
 
 Universal web collection engine — extract, monitor, crawl, and search any website through Cloudflare and anti-bot protections.
 
-**Features that cost $50-200/month elsewhere — free here.**
+**Paid tools charge $50-200/mo for this. Harvest is free, open-source, and runs locally.**
 
 ![Logo](https://raw.githubusercontent.com/zad111ak-ai/harvest/main/logo.svg)
 
@@ -12,7 +12,6 @@ Universal web collection engine — extract, monitor, crawl, and search any webs
 [![Scrapling](https://img.shields.io/badge/scrapling-0.4.9%2B-FF6B35?logo=python)](https://github.com/DoreenR/Scrapling)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/zad111ak-ai/harvest?logo=github)](https://github.com/zad111ak-ai/harvest/releases)
-[![GitHub stars](https://img.shields.io/github/stars/zad111ak-ai/harvest?style=social)](https://github.com/zad111ak-ai/harvest)
 [![BTC](https://img.shields.io/badge/donate-BTC-F7931A?logo=bitcoin)](https://blockchain.info/address/bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j)
 [![ETH](https://img.shields.io/badge/donate-ETH-8C8CFF?logo=ethereum)](https://etherscan.io/address/0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3)
 [![USDT](https://img.shields.io/badge/donate-USDT-26A17B?logo=tether)](https://tonviewer.com/UQAoI2i8P9-JeZhvGSUwKnymVyY5cb-1Rg7pdqoWMNena7DP)
@@ -22,60 +21,45 @@ Universal web collection engine — extract, monitor, crawl, and search any webs
 
 ## Why Harvest
 
-Every developer hits the same wall: you need data from a website, but it's behind Cloudflare. You try requests — blocked. You try Selenium — detected. You try API — doesn't exist.
+Every developer hits the same wall: you need data from a website, but it's behind Cloudflare. You try `requests` — blocked. You try Selenium — detected. You try the API — it doesn't exist.
 
-Harvest solves this. One tool, any website, any protection level.
+Harvest solves this. It uses [Scrapling](https://github.com/DoreenR/Scrapling) — a modern headless browser with anti-detection fingerprints, WebRTC blocking, and Canvas/WebGL spoofing — to bypass Cloudflare JS challenges and extract content from protected pages.
 
-And unlike paid tools (Browse AI $50/mo, Octoparse $80/mo, Apify $50/mo), Harvest is **free, open-source, and runs locally on your machine**.
+And unlike paid tools (Browse AI $50/mo, Octoparse $80/mo, Apify $50/mo), Harvest is **free, open-source, and runs entirely on your machine**.
 
-## vs Paid Tools
+## What works
 
-| Feature | Harvest (free) | Browse AI ($50/mo) | Octoparse ($80/mo) | ScrapingBee ($50/mo) |
-|---------|:-------------:|:------------------:|:------------------:|:--------------------:|
-| Cloudflare bypass | ✅ | ✅ | ❌ | ✅ |
-| Turnstile solving | ✅ | ✅ | ❌ | ❌ |
-| Browser fingerprinting | ✅ | ❌ | ❌ | ❌ |
-| JS rendered pages | ✅ | ❌ | ✅ | ✅ |
-| Structured extraction (CSS schema) | ✅ | ✅ | ✅ | ❌ |
-| Change monitoring + diffs | ✅ | ✅ | ❌ | ❌ |
-| Telegram alerts on changes | ✅ | ❌ | ❌ | ❌ |
-| Sitemap crawl | ✅ | ❌ | ✅ | ❌ |
-| Contact/email collection | ✅ | ❌ | ✅ | ❌ |
-| CSV export | ✅ | ✅ | ✅ | ✅ |
-| Proxy support | ✅ | ✅ | ✅ | ✅ |
-|| API server mode | ✅ | ✅ | ❌ | ✅ |
-| **Price** | **Free** | $50/mo | $80/mo | $50/mo |
-
-## Features
-
-| Command | What it does |
+| Command | Description |
 |---------|-------------|
-| `harvest scrape <url>` | Extract full page content as JSON, Markdown, text, or CSV |
-| `harvest extract <url> --schema JSON` | **Structured extraction** — like Browse AI. Get prices, titles, ratings by CSS selectors |
-| `harvest monitor <url>` | Track changes — first run saves baseline, next runs show diff |
-| `harvest monitor --notify telegram` | Get **Telegram alerts** when pages change (competitor pricing, docs updates) |
-| `harvest crawl <url>` | **Full site crawl** with sitemap discovery, bulk export |
-| `harvest contacts <url>` | Collect emails, social links, contact pages from a website |
-| `harvest batch <file>` | **Batch process** hundreds of URLs with concurrency, rate limits, retries |
-| `harvest batch --sitemap <url>` | Fetch sitemap, extract URLs, and batch process them |
-| `harvest pipeline "scrape URL | extract SCHEMA | export FILE"` | **Chain operations** like Zapier/Make workflows |
-| `harvest serve` | **HTTP API server** — like ScrapingBee, self-hosted (FastAPI) |
-| `harvest config show` | View persistent configuration (~/.harvest/config.yaml) |
-| `harvest config set key value` | Set config values (proxy, Telegram tokens, etc.) |
-| `harvest search <query>` | Search across Hacker News, Reddit, and more |
-| `harvest screenshot <url>` | Capture page screenshot |
-| `harvest help` | List all commands |
+| `harvest scrape <url>` | Extract full page content as Markdown, text, or HTML |
+| `harvest extract <url> --schema JSON` | **Structured extraction** — get prices, titles, ratings by CSS selectors |
+| `harvest monitor <url>` | Track page changes over time (saves snapshots locally, shows diffs) |
+| `harvest crawl <url>` | Find internal links and extract content from discovered pages |
+| `harvest contacts <url>` | Collect emails, social links, and contact page URLs |
+| `harvest batch <file>` | Process multiple URLs with concurrency control |
+| `harvest pipeline "scrape URL \| extract SCHEMA"` | Chain multiple operations in one command |
+| `harvest-mcp` | **MCP server** — expose all tools to AI agents (Hermes, Claude, Cursor) |
 
-### Killer features baked in:
+### What's built-in (no extra config)
 
-- **Cloudflare bypass** — Turnstile, Interstitial, fingerprinting — all automatic
-- **Structured extraction** — define a schema, get clean JSON. No regex, no post-processing
-- **Change alerts** — know when pricing, docs, or competitor content changes in real-time
-- **Full site crawling** — auto-discover sitemap.xml, crawl every page, export to CSV
+- **Cloudflare JS challenge bypass** — Scrapling solves Interstitial and JS challenges
+- **Anti-fingerprinting** — WebGL, Canvas, WebRTC are spoofed to avoid detection
+- **Structured extraction** — define a CSS schema, get clean JSON. No regex, no post-processing
+- **Change monitoring** — snapshots saved in `~/.harvest/`, diffs produced on subsequent runs
+- **Full site crawling** — auto-discover internal links, extract every page
+- **Contact collection** — email addresses, social links, phone numbers from a website
+- **Batch processing** — concurrent URL processing with rate limiting
+- **CSV export** — any extracted data can be exported to CSV
+- **Pipeline chaining** — pipe scrape → extract → export in a single command
 - **Plugin system** — add custom sources and processors
-- **Any output format** — JSON, Markdown, CSV, plain text (pipe to anything)
-- **Proxy support** — rotate proxies, use SOCKS5, HTTP, whatever
-- **Session persistence** — cookies, login state, browser fingerprint — all preserved
+
+### What's planned
+
+- HTTP API server mode (like ScrapingBee, self-hosted)
+- Telegram/email alerts on monitored changes
+- Docker image
+- Scheduled monitoring via cron helper
+- More export formats (XLSX, JSON)
 
 ## Quick Start
 
@@ -85,19 +69,19 @@ git clone https://github.com/zad111ak-ai/harvest
 cd harvest
 
 # Scrape any page
-python harvest scrape https://news.ycombinator.com
+harvest scrape https://news.ycombinator.com
 
-# Extract structured data like Browse AI
-python harvest extract https://shop.com --schema '{"title":"h1","price":".price"}'
+# Extract structured data
+harvest extract https://books.toscrape.com --schema '{"title":"h3 a","price":".price_color"}'
 
-# Monitor for changes with Telegram alert
-python harvest monitor https://example.com/pricing --notify telegram --token BOT:TOKEN --chat 12345
+# Monitor for changes
+harvest monitor https://example.com/pricing
 
 # Crawl entire site
-python harvest crawl https://docs.example.com --max-pages 100 --export docs.csv
+harvest crawl https://docs.example.com --max-pages 100
 
-# Find contacts and export
-python harvest contacts https://company.com --export leads.csv
+# Find contacts
+harvest contacts https://company.com
 ```
 
 Or install as a CLI tool:
@@ -107,64 +91,34 @@ pip install -e .
 harvest scrape https://news.ycombinator.com
 ```
 
-## Examples
+## MCP Server for AI Agents
 
-### Scrape a page
-
-```bash
-harvest scrape https://news.ycombinator.com --output md
-
-# Output:
-# Hacker News
-# (page content in Markdown)
-```
-
-### Structured extraction (Browse AI killer)
+Harvest exposes all its tools via the **Model Context Protocol (MCP)** — the standard interface for AI agents (Hermes, Claude Code, Cursor, etc.).
 
 ```bash
-harvest extract https://books.toscrape.com --schema '{"title":"h3 a","price":".price_color","availability":".availability"}'
+# Install with MCP support
+pip install -e ".[mcp]"
 
-# Output:
-# {
-#   "url": "https://books.toscrape.com",
-#   "title": "Books to Scrape",
-#   "extracted": {
-#     "title": "A Light in the Attic",
-#     "price": "£51.77",
-#     "availability": "In stock"
-#   }
-# }
+# Test it
+harvest-mcp --version
+
+# Register with your agent
+hermes mcp add harvest --command 'harvest-mcp'
 ```
 
-### Monitor with Telegram alert
+### Available MCP tools
 
-```bash
-# First run: saves baseline snapshot
-harvest monitor https://competitor.com/pricing
+| Tool | What it does |
+|------|-------------|
+| `scrape(url, selector?, extraction?)` | Scrape a page |
+| `extract(url, schema)` | Structured extraction by CSS schema |
+| `batch(urls, concurrency?)` | Batch process multiple URLs |
+| `contacts(url, depth?)` | Collect contact information |
+| `crawl(url, max_pages?)` | Crawl a website |
+| `monitor(url, selector?)` | Check for page changes |
+| `status()` | Get system configuration |
 
-# Second run: detects changes, sends Telegram message
-harvest monitor https://competitor.com/pricing --notify telegram --token 123456:ABC-DEF --chat -1001234567890
-```
-
-### Crawl full site
-
-```bash
-harvest crawl https://docs.example.com --max-pages 200 --delay 0.3
-# Finds sitemap.xml, crawls all URLs, exports results
-```
-
-### Export contacts to CSV
-
-```bash
-harvest contacts https://startup.io --export leads.csv
-# Collects emails + social links, saves as CSV
-```
-
-### Custom proxy
-
-```bash
-harvest scrape https://example.com --proxy http://user:pass@proxy:8080
-```
+All tools are stateless and use stdio transport — nothing runs 24/7. The agent starts the MCP process when it needs it and stops when done.
 
 ## API Usage
 
@@ -194,13 +148,8 @@ async def example():
 
     # Crawl
     crawler = SiteCrawler(max_concurrent=5)
-    crawl_result = await crawler.crawl("https://docs.example.com", max_pages=50)
-    print(f"Crawled {crawl_result['total_pages']} pages")
-
-    # Contacts
-    collector = ContactCollector()
-    contacts = await collector.collect("https://example.com")
-    print(contacts["emails"])
+    pages = await crawler.crawl("https://docs.example.com", max_pages=50)
+    print(f"Crawled {len(pages.get('pages', []))} pages")
 
 asyncio.run(example())
 ```
@@ -208,26 +157,33 @@ asyncio.run(example())
 ## How it works
 
 1. **Scrapling** launches a headless Chromium with anti-detection fingerprints
-2. **Cloudflare challenges** are solved automatically (Turnstile, Interstitial, JS challenges)
-3. **Content** is extracted, cleaned, and returned in your format
+2. **Cloudflare challenges** (JS challenges, Interstitial) are solved automatically
+3. **Content** is extracted from the rendered DOM
 4. **Snapshots** are saved locally for diff detection on subsequent runs
+
+> **Note:** Harvest can bypass Cloudflare JS challenges and Interstitial pages, but not Turnstile checkbox challenges (behavioral biometrics). Sites with Turnstile are marked as "needs manual action."
 
 ## Requirements
 
 - Python 3.10+
 - [Scrapling](https://github.com/DoreenR/Scrapling) 0.4.9+ (`pip install scrapling`)
-- Chromium (auto-downloaded by Playwright on first use)
+- Chromium (auto-downloaded on first use)
 
-## Roadmap
+## Comparison
 
-- [x] v0.2.0 — Structured extraction (CSS schema), full site crawl, Telegram alerts, CSV export
-- [x] v0.3.0 — Batch processing, HTTP API server, pipeline chaining, persistent config, proxy rotator
-- [ ] Docker image
-- [ ] Chrome extension integration
-- [ ] Webhook notifications
-- [ ] More source plugins (HN, Reddit, GitHub, LinkedIn)
-- [ ] Scheduled monitoring cron helper
-- [ ] Airtable/Google Sheets export
+| Feature | Harvest | Browse AI ($50/mo) | Octoparse ($80/mo) | ScrapingBee ($50/mo) |
+|---------|:-------:|:------------------:|:------------------:|:--------------------:|
+| Cloudflare JS bypass | ✅ | ✅ | ❌ | ✅ |
+| Anti-fingerprinting | ✅ | ❌ | ❌ | ❌ |
+| JS rendered pages | ✅ | ❌ | ✅ | ✅ |
+| Structured extraction (CSS) | ✅ | ✅ | ✅ | ❌ |
+| Change monitoring + diffs | ✅ | ✅ | ❌ | ❌ |
+| Full site crawling | ✅ | ❌ | ✅ | ❌ |
+| Contact/email collection | ✅ | ❌ | ✅ | ❌ |
+| Batch processing | ✅ | ✅ | ✅ | ❌ |
+| MCP server (AI agent interface) | ✅ | ❌ | ❌ | ❌ |
+| Proxy support | ✅ | ✅ | ✅ | ✅ |
+| **Price** | **Free** | $50/mo | $80/mo | $50/mo |
 
 ## License
 

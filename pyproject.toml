@@ -4,7 +4,7 @@ build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "harvest"
-version = "0.2.0"
+version = "0.4.0"
 description = "Universal web collection engine — extract, monitor, and search any website through Cloudflare"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,6 +19,7 @@ dependencies = [
 
 [project.optional-dependencies]
 csv = []
+mcp = ["mcp>=1.27,<2"]
 server = [
     "fastapi>=0.100",
     "uvicorn[standard]>=0.23",
@@ -26,6 +27,7 @@ server = [
 all = [
     "fastapi>=0.100",
     "uvicorn[standard]>=0.23",
+    "mcp>=1.27,<2",
 ]
 
 [project.urls]
@@ -34,6 +36,7 @@ Repository = "https://github.com/zad111ak-ai/harvest"
 
 [project.scripts]
 harvest = "harvest.cli:main"
+harvest-mcp = "harvest_mcp:main"
 
 [tool.setuptools.packages.find]
 include = ["harvest*"]

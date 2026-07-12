@@ -33,6 +33,15 @@ class BatchResult:
     errors: list[dict] = field(default_factory=list)
     duration: float = 0.0
 
+    def __iter__(self):
+        return iter(self.results)
+
+    def __len__(self):
+        return len(self.results)
+
+    def __getitem__(self, idx):
+        return self.results[idx]
+
 
 class BatchProcessor:
     """Process multiple URLs concurrently with rate limiting and retries.
