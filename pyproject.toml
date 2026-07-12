@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "harvest"
+version = "0.2.0"
+description = "Universal web collection engine — extract, monitor, and search any website through Cloudflare"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "zad111ak-ai", email = "zad111ak@gmail.com" }
+]
+
+dependencies = [
+    "scrapling>=0.4.9",
+]
+
+[project.optional-dependencies]
+csv = []
+server = [
+    "fastapi>=0.100",
+    "uvicorn[standard]>=0.23",
+]
+all = [
+    "fastapi>=0.100",
+    "uvicorn[standard]>=0.23",
+]
+
+[project.urls]
+Homepage = "https://github.com/zad111ak-ai/harvest"
+Repository = "https://github.com/zad111ak-ai/harvest"
+
+[project.scripts]
+harvest = "harvest.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["harvest*"]
