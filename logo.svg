@@ -1,39 +1,65 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#F59E0B"/>
-      <stop offset="100%" style="stop-color:#D97706"/>
+      <stop offset="0%" style="stop-color:#A78BFA"/>
+      <stop offset="100%" style="stop-color:#7C3AED"/>
     </linearGradient>
     <linearGradient id="g2" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#92400E"/>
-      <stop offset="100%" style="stop-color:#F59E0B"/>
+      <stop offset="0%" style="stop-color:#5B21B6"/>
+      <stop offset="100%" style="stop-color:#A78BFA"/>
     </linearGradient>
   </defs>
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="230" fill="#1C1917" stroke="url(#g)" stroke-width="4"/>
-  <!-- Wheat/sheaf shape -->
-  <path d="M160 340 Q180 260 220 210 Q240 190 256 180 Q272 190 292 210 Q332 260 352 340" 
-        fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round"/>
-  <!-- Wheat grains - left -->
-  <ellipse cx="200" cy="280" rx="6" ry="14" fill="url(#g)" transform="rotate(-30 200 280)"/>
-  <ellipse cx="185" cy="310" rx="5" ry="12" fill="url(#g)" transform="rotate(-50 185 310)"/>
-  <ellipse cx="220" cy="250" rx="5" ry="11" fill="url(#g2)" transform="rotate(-15 220 250)"/>
-  <ellipse cx="240" cy="235" rx="4" ry="10" fill="url(#g2)" transform="rotate(-5 240 235)"/>
-  <!-- Wheat grains - right -->
-  <ellipse cx="312" cy="280" rx="6" ry="14" fill="url(#g)" transform="rotate(30 312 280)"/>
-  <ellipse cx="327" cy="310" rx="5" ry="12" fill="url(#g)" transform="rotate(50 327 310)"/>
-  <ellipse cx="292" cy="250" rx="5" ry="11" fill="url(#g2)" transform="rotate(15 292 250)"/>
-  <ellipse cx="272" cy="235" rx="4" ry="10" fill="url(#g2)" transform="rotate(5 272 235)"/>
-  <!-- Central grain -->
-  <ellipse cx="256" cy="230" rx="5" ry="12" fill="#FBBF24"/>
-  <!-- Stem -->
-  <path d="M256 180 Q256 150 256 140" stroke="#F59E0B" stroke-width="4" fill="none" stroke-linecap="round"/>
-  <!-- Leaf left -->
-  <path d="M246 155 Q225 145 220 160" stroke="#D97706" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <!-- Leaf right -->
-  <path d="M266 155 Q287 145 292 160" stroke="#D97706" stroke-width="3" fill="none" stroke-linecap="round"/>
-  <!-- Web/net motif subtle overlay -->
-  <circle cx="256" cy="300" r="60" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.15"/>
-  <circle cx="256" cy="300" r="40" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.15"/>
-  <circle cx="256" cy="300" r="20" fill="none" stroke="#F59E0B" stroke-width="1" opacity="0.15"/>
+
+  <!-- Dirty page background -->
+  <rect width="512" height="512" fill="#F5F0E8"/>
+
+  <!-- Torn/stained paper edge -->
+  <rect x="0" y="0" width="512" height="512" fill="url(#g)" opacity="0.03"/>
+
+  <!-- Alien crop circle — outer ring -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#7C3AED" stroke-width="2" opacity="0.3"/>
+
+  <!-- Main alien pattern — 4-point star (harvest signal) -->
+  <path d="M256 60 L270 200 L410 210 L290 270 L330 410 L256 310 L182 410 L222 270 L102 210 L242 200 Z"
+        fill="none" stroke="url(#g)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Inner circle -->
+  <circle cx="256" cy="256" r="60" fill="none" stroke="url(#g)" stroke-width="2"/>
+
+  <!-- Center dot — the "captured" data point -->
+  <circle cx="256" cy="256" r="8" fill="url(#g)"/>
+
+  <!-- Concentric rings (like water ripple / data waves) -->
+  <circle cx="256" cy="256" r="100" fill="none" stroke="#A78BFA" stroke-width="1" opacity="0.2"/>
+  <circle cx="256" cy="256" r="140" fill="none" stroke="#A78BFA" stroke-width="1" opacity="0.15"/>
+
+  <!-- Small satellite dots — harvested data points -->
+  <circle cx="160" cy="160" r="4" fill="#7C3AED" opacity="0.4"/>
+  <circle cx="352" cy="160" r="4" fill="#7C3AED" opacity="0.4"/>
+  <circle cx="160" cy="352" r="4" fill="#7C3AED" opacity="0.4"/>
+  <circle cx="352" cy="352" r="4" fill="#7C3AED" opacity="0.4"/>
+
+  <!-- Connection lines — data being pulled in -->
+  <line x1="160" y1="160" x2="210" y2="210" stroke="#A78BFA" stroke-width="0.8" opacity="0.3"/>
+  <line x1="352" y1="160" x2="302" y2="210" stroke="#A78BFA" stroke-width="0.8" opacity="0.3"/>
+  <line x1="160" y1="352" x2="210" y2="302" stroke="#A78BFA" stroke-width="0.8" opacity="0.3"/>
+  <line x1="352" y1="352" x2="302" y2="302" stroke="#A78BFA" stroke-width="0.8" opacity="0.3"/>
+
+  <!-- Hand-drawn sketchy "notes" around the pattern (marginalia) -->
+  <path d="M80 60 Q90 55 100 65 Q110 75 120 65" stroke="#4B5563" stroke-width="1.5" fill="none" opacity="0.3"/>
+  <path d="M390 80 Q400 75 410 85" stroke="#4B5563" stroke-width="1.5" fill="none" opacity="0.3"/>
+  <path d="M70 380 Q80 370 90 385" stroke="#4B5563" stroke-width="1.5" fill="none" opacity="0.3"/>
+  <path d="M400 400 Q410 390 420 405" stroke="#4B5563" stroke-width="1.5" fill="none" opacity="0.3"/>
+
+  <!-- Coffee stain / age mark -->
+  <circle cx="420" cy="70" r="25" fill="#92400E" opacity="0.04"/>
+  <circle cx="420" cy="70" r="20" fill="#92400E" opacity="0.03"/>
+
+  <!-- Tiny "alien math" — harvest formula scribble -->
+  <text x="390" y="440" font-family="monospace" font-size="10" fill="#6B7280" opacity="0.25">
+    &lt;data/&gt;
+  </text>
+  <text x="60" y="440" font-family="monospace" font-size="10" fill="#6B7280" opacity="0.25">
+    ∑ = ∞
+  </text>
 </svg>
