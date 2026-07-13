@@ -2,7 +2,7 @@
 
 [![GitHub Stars](https://img.shields.io/github/stars/zad111ak-ai/harvest?style=social)](https://github.com/zad111ak-ai/harvest)
 
-**Free, open-source alternative to Firecrawl, Crawl4AI, and ScrapeGraphAI.** Extract structured data from any website — bypasses Cloudflare, uses LLM for natural-language extraction, and runs as an MCP server for AI agents. **No API keys required, no cloud, 100% local.** v0.6.1
+**Free, open-source alternative to Firecrawl, Crawl4AI, and ScrapeGraphAI.** Extract structured data from any website — bypasses Cloudflare, uses LLM for natural-language extraction, and runs as an MCP server for AI agents. **No API keys required, no cloud, 100% local.**
 
 ![Logo](./logo.svg)
 
