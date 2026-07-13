@@ -1,6 +1,8 @@
-# Harvest
+# 🌾 Harvest — Open-Source AI Web Scraper with Cloudflare Bypass & LLM Extraction
 
-Universal web collection engine — extract, monitor, crawl, and search any website through Cloudflare and anti-bot protections. **Free, open-source, runs on your machine.** v0.6.1
+[![GitHub Stars](https://img.shields.io/github/stars/zad111ak-ai/harvest?style=social)](https://github.com/zad111ak-ai/harvest)
+
+**Free, open-source alternative to Firecrawl, Crawl4AI, and ScrapeGraphAI.** Extract structured data from any website — bypasses Cloudflare, uses LLM for natural-language extraction, and runs as an MCP server for AI agents. **No API keys required, no cloud, 100% local.** v0.6.1
 
 ![Logo](./logo.svg)
 
@@ -42,6 +44,20 @@ harvest llm-extract https://books.toscrape.com \
 ```
 
 ---
+
+## Why Harvest?
+
+| Feature | Harvest | Scrapy | Playwright | Crawl4AI |
+|---|---|---|---|---|
+| Cloudflare/Turnstile bypass | ✅ Built-in | ❌ Needs middleware | ❌ | ❌ |
+| LLM extraction (natural language) | ✅ Any OpenAI API | ❌ | ❌ | ✅ |
+| MCP server (AI agent integration) | ✅ | ❌ | ❌ | ❌ |
+| One command, zero config | ✅ | ❌ Complex setup | ❌ | ✅ |
+| Pydantic validation | ✅ | ❌ | ❌ | ❌ |
+| Token tracking + cost estimation | ✅ | ❌ | ❌ | ❌ |
+| Price | **Free** | Free | Free | Free |
+
+**Keywords:** web scraping python, llm web scraper, cloudflare bypass scraper, mcp server scraping, open source alternative to Firecrawl, scrape without API key, python web scraping library
 
 ## Features
 
