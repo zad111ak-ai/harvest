@@ -4,7 +4,7 @@
 
 **Free, open-source alternative to Firecrawl, Crawl4AI, and ScrapeGraphAI.** Extract structured data from any website — bypasses Cloudflare, uses LLM for natural-language extraction, and runs as an MCP server for AI agents. **No API keys required, no cloud, 100% local.**
 
-![Logo](./logo.svg)
+![Logo](./new_logo.jpg)
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python)](https://python.org)
 [![Scrapling](https://img.shields.io/badge/scrapling-0.4.9%2B-FF6B35?logo=python)](https://github.com/DoreenR/Scrapling)
@@ -138,6 +138,44 @@ harvest diff https://shop.com v1.0 latest
 
 ---
 
+---
+
+## 🤖 Script Generator (v0.6.2)
+
+**Zero-token scraping.** Analyzes a page with LLM once to discover CSS selectors,
+then generates a standalone Python script that extracts the same data forever — 0 LLM tokens at runtime.
+
+Like ScrapeGraphAI's script generation, but you keep the script.
+
+```bash
+# Analyze a page and generate a scraper (one-time LLM cost)
+harvest generate https://shop.com --fields title price image
+
+# Generated script is fully standalone — no Harvest needed
+./scrape_generated.py https://shop.com/page/123
+
+# Batch mode
+./scrape_generated.py urls.txt --csv prices.csv
+```
+
+**Why it matters:**
+| Before (LLM every time) | After (one LLM, zero forever) |
+|---|---|
+| harvest llm-extract — 2K tokens/run | harvest generate — one-time 4K tokens |
+| 1000 runs = 2M tokens ($0.30-2.00) | 1000 runs = **$0.00** |
+| Needs LLM endpoint running | Pure Python + Scrapling, runs anywhere |
+| Slow (LLM latency each call) | Fast (Scrapling HTTP + BeautifulSoup) |
+
+**What's generated:**
+- Self-contained Python script with hardcoded CSS selectors
+- Pagination support (if detected)
+- CSV/JSON export
+- Batch URL processing from file
+- Retry logic + random delays for anti-detection
+- Stealth headers
+
+---
+
 ## Features
 
 | Capability | Harvest | Browse AI ($50/mo) | Octoparse ($80/mo) | ScrapingBee ($50/mo) |
@@ -153,6 +191,11 @@ harvest diff https://shop.com v1.0 latest
 | MCP server (AI agent interface) | ✅ | ❌ | ❌ | ❌ |
 | Rate limiting + caching | ✅ | ❌ | ❌ | ❌ |
 | **Price** | **Free** | $50/mo | $80/mo | $50/mo |
+
+**New in v0.6.2:**
+| Feature | Harvest | Crawl4AI | Firecrawl |
+|---|---|---|---|
+| **Script Generator** | ✅ Generate standalone scripts (0 tokens) | ❌ | ❌ |
 
 ---
 
@@ -344,6 +387,7 @@ llm:
 | `harvest snapshot <url>` | **Capture DOM structure for diff** |
 | `harvest diff <url> <old> <new>` | **Compare DOM snapshots** |
 | `harvest cache-stats` | **Semantic cache statistics** |
+| `harvest generate <url> --fields F1 F2` | **Generate standalone scraping script (0 token cost)** |
 | `harvest-mcp` | MCP server for AI agents |
 
 ---
@@ -468,6 +512,7 @@ pip install -e .
 
 ## v0.6.2 Changelog
 
+- 🤖 **Script Generator** — analyze once, scrape forever. `harvest generate <url> --fields title price`
 - 🧠 **Semantic Cache** — meaning-based response cache (saves 50-70% LLM tokens)
 - 🔧 **Self-Healing Parsers** — auto-regenerate broken CSS selectors via LLM
 - 📊 **Structural Diff** — DOM structure change detection with human-readable summary

@@ -24,6 +24,7 @@ from .failures import FailureTracker
 from .semantic_cache import SemanticCache
 from .structural_diff import StructuralDiff
 from .self_healing import SelfHealingParser
+from .script_generator import ScriptGenerator
 
 __version__ = "0.6.2"
 
@@ -48,5 +49,6 @@ __all__ = [
     "SemanticCache",
     "StructuralDiff",
     "SelfHealingParser",
+    "ScriptGenerator",
     "__version__",
 ]

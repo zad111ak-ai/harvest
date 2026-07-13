@@ -274,6 +274,37 @@ def build_parser() -> argparse.ArgumentParser:
     p_config_set.add_argument("value", help="Value to set")
     p_config_sub.add_parser("show", help="Show full config")
 
+    # ── generate ──
+    p_gen = sub.add_parser(
+        "generate",
+        help="Generate a standalone scraping script (0 LLM cost at runtime)",
+    )
+    p_gen.add_argument("url", help="URL to analyze for selector discovery")
+    p_gen.add_argument(
+        "--fields",
+        "-f",
+        nargs="+",
+        required=True,
+        help="Data fields to extract (e.g. title price image)",
+    )
+    p_gen.add_argument(
+        "--output",
+        "-o",
+        default="scrape_generated.py",
+        help="Output script path (default: scrape_generated.py)",
+    )
+    p_gen.add_argument(
+        "--format",
+        choices=["json", "csv"],
+        default="json",
+        help="Output format for generated script (default: json)",
+    )
+    p_gen.add_argument(
+        "--no-delay",
+        action="store_true",
+        help="Disable random delays in generated script",
+    )
+
     return parser
 
 
@@ -873,6 +904,33 @@ async def cmd_config(args):
         print("Usage: harvest config [show|get keys...|set keys... value]")
 
 
+async def cmd_generate(args):
+    """Generate a standalone scraping script from a URL."""
+    import sys
+    from .script_generator import ScriptGenerator
+
+    gen = ScriptGenerator(proxy=args.proxy)
+
+    print(f"🔍 Fetching {args.url}...", file=sys.stderr)
+    print(f"🧠 Analyzing with LLM (fields: {', '.join(args.fields)})...", file=sys.stderr)
+
+    try:
+        script = await gen.generate(
+            url=args.url,
+            fields=args.fields,
+            output_format=args.format,
+            add_delay=not args.no_delay,
+        )
+    except Exception as e:
+        print(f"❌ Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    gen.save(script, args.output)
+    print(f"\n✅ Script saved to {args.output}", file=sys.stderr)
+    print(f"   Run: python3 {args.output} <URL>", file=sys.stderr)
+    print(f"   Batch: python3 {args.output} urls.txt --csv output.csv", file=sys.stderr)
+
+
 # ── Main dispatcher ──
 
 
@@ -899,6 +957,7 @@ def main():
         "batch": cmd_batch,
         "serve": cmd_serve,
         "config": cmd_config,
+        "generate": cmd_generate,
     }
 
     cmd_fn = dispatch.get(args.command)

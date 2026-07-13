@@ -47,7 +47,7 @@ proxylist.txt
 # Generated
 *.gif
 *.png
-*.jpg
+# *.jpg — logo
 __snapshots__/
 
 # OS
