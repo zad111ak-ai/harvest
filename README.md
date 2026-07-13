@@ -1,9 +1,12 @@
 # Harvest
 
 ```text
-╔═╗╦ ╦╦═╗╦ ╦╦═╗╦═╗
-║ ║║ ║╠╦╝║ ║╠╣ ╠╦╝
-╚═╝╚═╝╩╚═╚═╝╩  ╩╚═
+ _   _   ___   _   _  _____  ___   _   _
+| | | | / _ \ | \ | ||  ___|/ _ \ | \ | |
+| |_| |/ /_\ \|  \| || |_  / /_\ \|  \| |
+|  _  ||  _  || . ' ||  _| |  _  || . ' |
+| | | || | | || |\  || |   | | | || |\  |
+\_| |_/\_| |_/\_| \_/\_|   \_| |_/\_| \_/
 ```
 
 Universal web collection engine — extract, monitor, crawl, and search any website through Cloudflare and anti-bot protections. **Free, open-source, runs on your machine.**
