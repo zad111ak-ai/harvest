@@ -4,40 +4,34 @@ build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "harvest-agent"
-version = "0.5.5"
+version = "0.6.0"
 description = "Universal web collection engine — extract, monitor, and search any website through Cloudflare"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
-authors = [
-    { name = "zad111ak-ai", email = "zad111ak@gmail.com" }
+license = "MIT"
+authors = [{ name = "zad111ak" }]
+keywords = ["web-scraping", "extraction", "cloudflare", "monitoring", "automation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
 ]
-
 dependencies = [
-    "scrapling>=0.4.9",
+    "scrapling>=0.2",
+    "beautifulsoup4>=4.12",
     "aiohttp>=3.9",
+    "loguru>=0.7",
+    "pydantic>=2.0",
 ]
 
 [project.optional-dependencies]
-csv = []
-mcp = ["mcp>=1.27,<2"]
-server = [
-    "fastapi>=0.100",
-    "uvicorn[standard]>=0.23",
-]
-all = [
-    "fastapi>=0.100",
-    "uvicorn[standard]>=0.23",
-    "mcp>=1.27,<2",
-]
-
-[project.urls]
-Homepage = "https://github.com/zad111ak-ai/harvest"
-Repository = "https://github.com/zad111ak-ai/harvest"
+llm = ["openai>=1.0"]
+yolo = ["ultralytics>=8.0"]
+all = ["harvest-agent[llm,yolo]"]
 
 [project.scripts]
 harvest = "harvest.cli:main"
-harvest-mcp = "harvest_mcp:main"
 
 [tool.setuptools.packages.find]
 include = ["harvest*"]

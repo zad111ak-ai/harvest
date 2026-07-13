@@ -14,6 +14,44 @@ except ImportError:
 
 
 class BrowserSession:
+    async def evaluate(self, expression: str, **kwargs) -> Any:
+        """Execute JavaScript in the page context and return the result.
+
+        Args:
+            expression: JavaScript expression to evaluate
+
+        Returns:
+            The result of the JavaScript expression
+        """
+        if not self._started:
+            await self.start()
+
+        # Get the Playwright page from the session
+        page = self.get_playwright_page()
+        if page is None:
+            raise RuntimeError("No active page in browser session")
+
+        return await page.evaluate(expression, **kwargs)
+
+    async def extract_structured(self, js_expression: str, **kwargs) -> list[dict]:
+        """Execute JS that returns an array of objects (e.g. product listings).
+
+        The JS expression must return an array of plain objects.
+        Each object becomes a dict in the result list.
+
+        Args:
+            js_expression: JS expression returning Array<Object>
+
+        Returns:
+            List of dicts from JS evaluation
+        """
+        result = await self.evaluate(js_expression, **kwargs)
+        if isinstance(result, list):
+            return result
+        if isinstance(result, dict):
+            return [result]
+        return [{"value": result}]
+
     """Reusable browser session via Scrapling AsyncStealthySession.
 
     Features:

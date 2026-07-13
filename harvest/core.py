@@ -35,8 +35,10 @@ class Scraper:
         use_rotator: bool = True,
         use_stealth: bool = True,
         use_captcha_solver: bool = True,
-        rate_limit: int = 10,  # max requests per minute
-        cache_ttl: int = 300,  # seconds
+        rate_limit: int = 10,
+        domain_limits: Optional[dict[str, int]] = None,
+        cache_ttl: int = 300,
+        proxy_pool: Optional[list[str]] = None,
     ):
         self.proxy = proxy
         self.headless = headless
@@ -44,22 +46,26 @@ class Scraper:
         self.use_stealth = use_stealth
         self.use_captcha_solver = use_captcha_solver
         self._session: Optional[BrowserSession] = None
-        self.rate_limiter = RateLimiter(max_per_minute=rate_limit)
+        self.rate_limiter = RateLimiter(
+            max_per_minute=rate_limit,
+            domain_limits=domain_limits,
+        )
         self.cache = ResponseCache(ttl_seconds=cache_ttl)
 
         if use_rotator:
-            self.proxy_rotator = ProxyRotator()
+            self.proxy_rotator = ProxyRotator(pool=proxy_pool)
         if use_captcha_solver:
             self.captcha_solver = CaptchaSolver()
         if use_stealth:
             self.stealth = Stealth()
 
-    async def _get_session(self) -> BrowserSession:
-        """Get or create persistent browser session."""
+    async def _get_session(self, url: str = "") -> BrowserSession:
+        """Get or create persistent browser session with domain-aware proxy."""
         if self._session is None:
             proxy = self.proxy
-            if self.use_rotator:
-                proxy = await self.proxy_rotator.get() or proxy
+            if self.use_rotator and url:
+                domain = ProxyRotator.get_domain(url)
+                proxy = await self.proxy_rotator.get_for_domain(domain) or proxy
 
             additional_args = {}
             if self.use_stealth:
@@ -74,7 +80,6 @@ class Scraper:
         return self._session
 
     async def close(self):
-        """Close the persistent browser session."""
         if self._session:
             await self._session.close()
             self._session = None
@@ -85,28 +90,15 @@ class Scraper:
         selector: Optional[str] = None,
         extraction: str = "markdown",
     ) -> dict:
-        """Scrape a single URL.
-
-        Args:
-            url: The page URL
-            selector: Optional CSS selector to extract specific elements
-            extraction: 'markdown', 'text', or 'html'
-
-        Returns:
-            dict with url, title, content, metadata
-        """
         try:
-            # Check cache first
             cached = self.cache.get(url)
             if cached:
                 return cached
 
-            # Rate limit
-            await self.rate_limiter.acquire()
+            await self.rate_limiter.acquire(url)
 
-            session = await self._get_session()
+            session = await self._get_session(url)
 
-            # Solve captcha if detected (only on first scrape per session)
             if self.use_captcha_solver and hasattr(self, "captcha_solver"):
                 try:
                     page = session.get_playwright_page()
@@ -123,14 +115,12 @@ class Scraper:
 
             content = ""
             title = ""
-            # Scrapling Response object
             if hasattr(resp, "body"):
                 body = resp.body
                 if isinstance(body, bytes):
                     content = body.decode("utf-8", errors="replace")
                 elif isinstance(body, str):
                     content = body
-                # Try prettify HTML
                 try:
                     pretty = resp.prettify()
                     if pretty and len(pretty) > len(content):
@@ -143,12 +133,10 @@ class Scraper:
             elif isinstance(resp, str):
                 content = resp
 
-            # Extract title
             title_match = re.search(r"<title[^>]*>(.*?)</title>", content, re.DOTALL)
             if title_match:
                 title = title_match.group(1).strip()
 
-            # Record success in adaptive loop
             if HAVE_ADAPTIVE and content:
                 try:
                     capture_record("scrape", f"OK {url[:60]}", True, tool="harvest")
@@ -165,7 +153,6 @@ class Scraper:
             self.cache.set(url, result)
             return result
         except Exception as e:
-            # Log to adaptive loop
             if HAVE_ADAPTIVE:
                 try:
                     capture_record("scrape", f"FAIL {url[:50]}: {str(e)[:80]}", False, tool="harvest")
@@ -179,8 +166,6 @@ class Scraper:
         selector: Optional[str] = None,
         extraction: str = "markdown",
     ) -> list[dict]:
-        """Scrape multiple URLs concurrently."""
-
         tasks = [self.scrape(url, selector, extraction) for url in urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         output = []
@@ -197,7 +182,13 @@ class Scraper:
                 output.append(r)
         return output
 
+    async def evaluate(self, url: str, js_expression: str) -> Any:
+        """Scrape a URL and evaluate JS expression on the rendered page."""
+        await self.rate_limiter.acquire(url)
+        session = await self._get_session(url)
+        await session.fetch(url, extraction_type="text")
+        return await session.evaluate(js_expression)
+
     async def browse(self, url: str, page_action: callable) -> Any:
-        """Execute a custom page_action on a page (login, click, etc)."""
         async with BrowserSession(proxy=self.proxy, headless=self.headless) as session:
             return await session.fetch(url, page_action=page_action)

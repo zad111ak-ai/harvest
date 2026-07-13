@@ -1,109 +1,99 @@
-"""
-ProxyRotator — Free proxy rotation with health checks.
+"""ProxyRotator — Proxy rotation with pool support and domain affinity.
 
 Features:
-- Loads free proxies from public lists
-- Health check (ping, HTTPS support)
-- Fallback to direct connection
-- Thread-safe rotation
+- User-provided proxy pools
+- Environment variable HARVEST_PROXY_POOL (comma-separated)
+- Round-robin selection
+- Per-domain affinity (same proxy for same domain)
+- Health checks
 
 Usage:
-    rotator = ProxyRotator()
-    proxy = rotator.get()  # "http://user:pass@host:port"
+    rotator = ProxyRotator(pool=["http://p1:8080", "http://p2:8080"])
+    proxy = await rotator.get()
+    proxy = await rotator.get_for_domain("ozon.ru")
 """
 
 import asyncio
-import random
-from typing import Optional, List
+import os
+from typing import Optional
+from urllib.parse import urlparse
+
 import aiohttp
 from loguru import logger
 
 
 class ProxyRotator:
-    def __init__(self, sources: Optional[List[str]] = None):
-        self.sources = sources or [
-            "https://free-proxy-list.net/",
-            "https://hidemy.name/en/proxy-list/?type=hs#list",
-        ]
-        self.proxies: List[str] = []
-        self.healthy_proxies: List[str] = []
+    def __init__(self, pool: Optional[list[str]] = None):
+        self.pool = pool or self._load_from_env()
+        self.healthy: list[str] = []
+        self._index = 0
+        self._domain_affinity: dict[str, str] = {}
         self.lock = asyncio.Lock()
 
-    async def load_proxies(self) -> None:
-        """Load proxies from local file or public sources."""
-        # Try local file first
+    @staticmethod
+    def _load_from_env() -> list[str]:
+        raw = os.environ.get("HARVEST_PROXY_POOL", "")
+        if raw:
+            return [p.strip() for p in raw.split(",") if p.strip()]
+        return []
+
+    async def load_proxies(self):
+        if self.pool:
+            return
         try:
-            with open("/home/dima/harvest/proxies.txt", "r") as f:
-                self.proxies = [f"http://{line.strip()}" for line in f if line.strip()]
-                logger.info(f"Loaded {len(self.proxies)} proxies from local file")
-                return
-        except Exception as e:
-            logger.debug(f"Local proxies failed: {e}")
-
-        # Fallback to public sources
-        async with aiohttp.ClientSession() as session:
-            for source in self.sources:
-                try:
-                    async with session.get(source, timeout=5) as resp:
-                        if resp.status == 200:
-                            text = await resp.text()
-                            new_proxies = self._extract_proxies(text)
-                            self.proxies.extend(new_proxies)
-                            logger.info(f"Loaded {len(new_proxies)} proxies from {source}")
-                except Exception as e:
-                    logger.warning(f"Failed to load {source}: {e}")
-
-    def _extract_proxies(self, text: str) -> List[str]:
-        """Extract IP:PORT from HTML."""
-        import re
-
-        # Example: 1.1.1.1:80 or user:pass@1.1.1.1:80
-        pattern = r"(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d{1,5})"
-        matches = re.findall(pattern, text)
-        return [f"http://{m}" for m in matches]
+            with open("/home/dima/harvest/proxies.txt") as f:
+                self.pool = [f"http://{line.strip()}" for line in f if line.strip()]
+                logger.info(f"Loaded {len(self.pool)} proxies from file")
+        except FileNotFoundError:
+            pass
 
     async def check_health(self, proxy: str) -> bool:
-        """Check if proxy is alive and supports HTTPS."""
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    "https://httpbin.org/ip",
-                    proxy=proxy,
-                    timeout=10,
-                ) as resp:
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get("https://httpbin.org/ip", proxy=proxy) as resp:
                     if resp.status == 200:
                         data = await resp.json()
-                        if "origin" in data:
-                            return True
-        except Exception as e:
-            logger.debug(f"Proxy {proxy} failed: {e}")
+                        return "origin" in data
+        except Exception:
+            pass
         return False
 
-    async def refresh_healthy(self) -> None:
-        """Check all proxies and update healthy list."""
+    async def refresh_healthy(self):
+        if not self.pool:
+            return
         async with self.lock:
-            tasks = [self.check_health(p) for p in self.proxies]
-            results = await asyncio.gather(*tasks)
-            self.healthy_proxies = [p for p, healthy in zip(self.proxies, results) if healthy]
-            logger.info(f"Healthy proxies: {len(self.healthy_proxies)}/{len(self.proxies)}")
+            tasks = [self.check_health(p) for p in self.pool]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            self.healthy = [p for p, r in zip(self.pool, results) if r is True]
+            logger.info(f"Healthy proxies: {len(self.healthy)}/{len(self.pool)}")
 
     async def get(self) -> Optional[str]:
-        """Get a random healthy proxy or None."""
         async with self.lock:
-            if not self.healthy_proxies:
-                await self.refresh_healthy()
-            if self.healthy_proxies:
-                return random.choice(self.healthy_proxies)
-            return None
+            if not self.healthy:
+                return None
+            proxy = self.healthy[self._index % len(self.healthy)]
+            self._index += 1
+            return proxy
 
-    async def start(self) -> None:
-        """Load and check proxies on startup."""
+    async def get_for_domain(self, domain: str) -> Optional[str]:
+        if domain in self._domain_affinity:
+            proxy = self._domain_affinity[domain]
+            if proxy in self.healthy:
+                return proxy
+        proxy = await self.get()
+        if proxy:
+            self._domain_affinity[domain] = proxy
+        return proxy
+
+    @staticmethod
+    def get_domain(url: str) -> str:
+        try:
+            return urlparse(url).netloc.lower()
+        except Exception:
+            return ""
+
+    async def start(self):
         await self.load_proxies()
-        await self.refresh_healthy()
-        # Refresh every 30 minutes
-        asyncio.create_task(self._periodic_refresh())
-
-    async def _periodic_refresh(self) -> None:
-        while True:
-            await asyncio.sleep(1800)  # 30 minutes
+        if self.pool:
             await self.refresh_healthy()
