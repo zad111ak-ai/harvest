@@ -54,7 +54,7 @@ def add_mcp_tools(app: FastAPI) -> None:
         await rotator.load_proxies()
         await rotator.refresh_healthy()
         return {
-            "total_proxies": len(rotator.proxies),
-            "healthy_proxies": len(rotator.healthy_proxies),
-            "proxies": rotator.healthy_proxies,
+            "total_proxies": len(rotator.pool),
+            "healthy_proxies": len(rotator.healthy),
+            "proxies": rotator.healthy,
         }

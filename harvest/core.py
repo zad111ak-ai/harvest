@@ -2,15 +2,15 @@
 
 import asyncio
 import re
-from typing import Any, Optional
 from datetime import datetime
+from typing import Any, Optional
 
 from .browser import BrowserSession
-from .proxy_rotator import ProxyRotator
-from .captcha_solver import CaptchaSolver
-from .stealth import Stealth
-from .rate_limiter import RateLimiter
 from .cache import ResponseCache
+from .captcha_solver import CaptchaSolver
+from .proxy_rotator import ProxyRotator
+from .rate_limiter import RateLimiter
+from .stealth import Stealth
 
 # Optional AdaptiveCore integration
 try:
@@ -148,14 +148,18 @@ class Scraper:
                 "title": title or url,
                 "content": content,
                 "timestamp": datetime.utcnow().isoformat(),
-                "proxy": self.proxy,
             }
             self.cache.set(url, result)
             return result
         except Exception as e:
             if HAVE_ADAPTIVE:
                 try:
-                    capture_record("scrape", f"FAIL {url[:50]}: {str(e)[:80]}", False, tool="harvest")
+                    capture_record(
+                        "scrape",
+                        f"FAIL {url[:50]}: {str(e)[:80]}",
+                        False,
+                        tool="harvest",
+                    )
                 except Exception:
                     pass
             raise
@@ -192,3 +196,9 @@ class Scraper:
     async def browse(self, url: str, page_action: callable) -> Any:
         async with BrowserSession(proxy=self.proxy, headless=self.headless) as session:
             return await session.fetch(url, page_action=page_action)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        await self.close()

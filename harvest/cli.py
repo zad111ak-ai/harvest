@@ -132,7 +132,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_llm.add_argument("--model", "-m", help="LLM model (default from config)")
     p_llm.add_argument("--base-url", help="LLM API base URL (default from config)")
     p_llm.add_argument("--api-key", help="LLM API key (default from config)")
-    p_llm.add_argument("--output", "-o", choices=["json", "md", "txt"], default="json", help="Output format")
+    p_llm.add_argument(
+        "--output",
+        "-o",
+        choices=["json", "md", "txt"],
+        default="json",
+        help="Output format",
+    )
 
     # ── map ──
     p_map = sub.add_parser(

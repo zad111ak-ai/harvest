@@ -15,6 +15,7 @@ Usage:
 
 import asyncio
 import os
+from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -41,9 +42,10 @@ class ProxyRotator:
         if self.pool:
             return
         try:
-            with open("/home/dima/harvest/proxies.txt") as f:
+            proxy_file = Path.home() / "harvest" / "proxies.txt"
+            with open(proxy_file) as f:
                 self.pool = [f"http://{line.strip()}" for line in f if line.strip()]
-                logger.info(f"Loaded {len(self.pool)} proxies from file")
+                logger.info(f"Loaded {len(self.pool)} proxies from {proxy_file}")
         except FileNotFoundError:
             pass
 

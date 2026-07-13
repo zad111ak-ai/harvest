@@ -59,7 +59,7 @@ class ContactCollector:
 
             # Visit contact pages
             contact_pages = [p for p in internal_pages if self._is_contact_page(p)]
-            for page_url in contact_pages[: depth - 1]:
+            for page_url in contact_pages[:depth]:
                 try:
                     page = await self.scraper.scrape(page_url)
                     result["pages_checked"].append(page_url)

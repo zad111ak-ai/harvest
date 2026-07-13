@@ -18,7 +18,7 @@ classifiers = [
     "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
 ]
 dependencies = [
-    "scrapling>=0.2",
+    "scrapling>=0.4.9",
     "beautifulsoup4>=4.12",
     "aiohttp>=3.9",
     "loguru>=0.7",
@@ -28,7 +28,8 @@ dependencies = [
 [project.optional-dependencies]
 llm = ["openai>=1.0"]
 yolo = ["ultralytics>=8.0"]
-all = ["harvest-agent[llm,yolo]"]
+server = ["fastapi>=0.109.0", "uvicorn>=0.27.0"]
+all = ["harvest-agent[llm,yolo,server]"]
 
 [project.scripts]
 harvest = "harvest.cli:main"

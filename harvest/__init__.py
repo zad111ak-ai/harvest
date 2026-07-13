@@ -6,17 +6,32 @@ Built on Scrapling for Cloudflare bypass and anti-bot evasion.
 Features that cost $50-200/mo elsewhere — free here.
 """
 
-__version__ = "0.5.5"
+from .core import Scraper
+from .extract import SchemaExtractor, LLMExtractor
+from .monitor import ChangeWatcher
+from .notify import Notifier
+from .pipeline import Pipeline
+from .config import Config
+from .contacts import ContactCollector
+from .batch import BatchProcessor
+from .driftz import DriftzMail
+from .crawl import SiteCrawler
+from .export import Exporter
 
-from .core import Scraper as Scraper
-from .extract import SchemaExtractor as SchemaExtractor
-from .extract import LLMExtractor as LLMExtractor
-from .extract import load_schema as load_schema
-from .batch import BatchProcessor as BatchProcessor, BatchResult as BatchResult
-from .driftz import DriftzMail as DriftzMail
-from .contacts import ContactCollector as ContactCollector
-from .notify import Notifier as Notifier
-from .crawl import SiteCrawler as SiteCrawler
-from .export import Exporter as Exporter
-from .monitor import ChangeWatcher as ChangeWatcher
-from .config import Config as Config
+__version__ = "0.6.0"
+
+__all__ = [
+    "Scraper",
+    "SchemaExtractor",
+    "LLMExtractor",
+    "ChangeWatcher",
+    "Notifier",
+    "Pipeline",
+    "Config",
+    "ContactCollector",
+    "BatchProcessor",
+    "DriftzMail",
+    "SiteCrawler",
+    "Exporter",
+    "__version__",
+]

@@ -78,17 +78,20 @@ class Exporter:
             return [{"value": str(data)}]
 
     @staticmethod
-    def _flatten(d: dict, parent_key: str = "", sep: str = ".") -> dict:
+    def _flatten(d: dict, parent_key: str = "", sep: str = ".", _depth: int = 0) -> dict:
         """Flatten nested dict into single-level keys."""
+        if _depth > 10:
+            return {parent_key or "value": str(d)}
         items: dict[str, Any] = {}
         for k, v in d.items():
             new_key = f"{parent_key}{sep}{k}" if parent_key else k
             if isinstance(v, dict):
-                items.update(Exporter._flatten(v, new_key, sep=sep))
+                items.update(Exporter._flatten(v, new_key, sep=sep, _depth=_depth + 1))
             elif isinstance(v, list):
                 # Join list items as semicolon-separated string
                 items[new_key] = "; ".join(
-                    Exporter._flatten(item, "", sep) if isinstance(item, dict) else str(item) for item in v
+                    str(Exporter._flatten(item, "", sep, _depth + 1)) if isinstance(item, dict) else str(item)
+                    for item in v
                 )
             else:
                 items[new_key] = v
