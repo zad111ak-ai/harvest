@@ -97,7 +97,7 @@ class BatchProcessor:
         if self.rate_limit > 0:
             rate_limit_sem = asyncio.Semaphore(self.rate_limit)
 
-        async def process_one(url: str) -> dict:
+        async def process_one(url: str) -> dict[str, object]:
             async with sem:
                 if rate_limit_sem:
                     async with rate_limit_sem:
@@ -127,6 +127,7 @@ class BatchProcessor:
                                 "error": str(e),
                                 "attempts": attempt + 1,
                             }
+            return {"url": url, "status": "error", "error": "Unreachable", "attempts": 0}
 
         dash = Dashboard(total=len(urls), description="Batch processing")
         dash.start()
@@ -135,11 +136,11 @@ class BatchProcessor:
 
         for out in outputs:
             if out["status"] == "ok":
-                dash.update(out["url"], success=True)
+                dash.update(str(out["url"]), success=True)
                 result.success += 1
                 result.results.append(out)
             else:
-                dash.update(out["url"], success=False)
+                dash.update(str(out["url"]), success=False)
                 result.failed += 1
                 result.errors.append(out)
 

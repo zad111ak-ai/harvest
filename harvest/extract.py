@@ -20,7 +20,6 @@ from bs4 import BeautifulSoup
 from pydantic import BaseModel, ValidationError
 
 from .core import Scraper
-from .preprocess import clean_html_for_llm
 
 log = logging.getLogger("harvest.extract")
 
@@ -111,9 +110,16 @@ class SchemaExtractor:
 
     async def extract_many(self, urls: list[str], schema: dict, extraction: str = "html") -> list[dict]:
         tasks = [self.extract(url, schema, extraction) for url in urls]
-        return await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        output: list[dict[str, Any]] = []
+        for i, r in enumerate(results):
+            if isinstance(r, Exception):
+                output.append({"url": urls[i], "error": str(r)})
+            else:
+                output.append(r)  # type: ignore[arg-type]
+        return output
 
-    def _extract_field(self, soup: BeautifulSoup, field_def: Any) -> Any:
+    def _extract_field(self, soup: Any, field_def: Any) -> Any:
         if isinstance(field_def, str):
             return self._css_text(soup, field_def)
         if isinstance(field_def, dict):
@@ -130,12 +136,12 @@ class SchemaExtractor:
                     results.append(item)
                 return results
             if _type == "all":
-                return self._css_all(soup, sel)
+                return self._css_all(soup, sel or "")
             attr = field_def.get("attr", "text")
             many = field_def.get("many", False)
             if many:
-                return self._css_all_attr(soup, sel, attr)
-            return self._css_attr(soup, sel, attr)
+                return self._css_all_attr(soup, sel or "", attr)
+            return self._css_attr(soup, sel or "", attr)
         return None
 
     def _css_text(self, soup: BeautifulSoup, selector: str) -> Optional[str]:
@@ -151,15 +157,17 @@ class SchemaExtractor:
             return None
         if attr == "text":
             return el.get_text(strip=True)
-        return el.get(attr)
+        val = el.get(attr)
+        return val if isinstance(val, str) else None
 
     def _css_all_attr(self, soup: BeautifulSoup, selector: str, attr: str) -> list[Any]:
-        results = []
+        results: list[Optional[str]] = []
         for el in soup.select(selector):
             if attr == "text":
                 results.append(el.get_text(strip=True))
             else:
-                results.append(el.get(attr))
+                val = el.get(attr)
+                results.append(val if isinstance(val, str) else None)  # type: ignore[arg-type]
         return results
 
 
@@ -219,6 +227,7 @@ class LLMExtractor:
         pydantic_model: Optional[type[BaseModel]] = None,
         extraction: str = "markdown",
         preprocess: bool = True,
+        preprocess_mode: str = "full",
     ) -> dict:
         """Extract data from a URL using natural language.
 
@@ -229,6 +238,7 @@ class LLMExtractor:
             pydantic_model: Optional Pydantic model for response validation
             extraction: Page content format ('markdown', 'text', or 'html')
             preprocess: Clean HTML before sending to LLM (default True, saves tokens)
+            preprocess_mode: 'full' (safe), 'economy' (save tokens), 'hybrid' (economy+context), 'auto' (smart)
 
         Returns:
             dict with original page info + LLM extraction result
@@ -241,7 +251,17 @@ class LLMExtractor:
 
         # Smart preprocessing to reduce token costs
         if preprocess and extraction == "html":
-            content = clean_html_for_llm(content, max_chars=50_000)
+            from harvest.preprocess import HTMLPreprocessor
+
+            preprocessor = HTMLPreprocessor(mode=preprocess_mode)
+            cleaned = preprocessor.clean(content)
+            content = cleaned.text
+        elif preprocess and preprocess_mode != "full":
+            from harvest.preprocess import HTMLPreprocessor
+
+            preprocessor = HTMLPreprocessor(mode=preprocess_mode)
+            cleaned = preprocessor.clean(content)
+            content = cleaned.text
         else:
             content = content[:15_000]
 
@@ -291,7 +311,14 @@ class LLMExtractor:
     ) -> list[dict]:
         """Extract data from multiple URLs with the same description."""
         tasks = [self.extract(url, description, schema, pydantic_model, extraction) for url in urls]
-        return await asyncio.gather(*tasks, return_exceptions=True)
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        output: list[dict[str, Any]] = []
+        for i, r in enumerate(results):
+            if isinstance(r, Exception):
+                output.append({"url": urls[i], "error": str(r)})
+            else:
+                output.append(r)  # type: ignore[arg-type]
+        return output
 
     def _chunk_content(self, content: str, max_chars: int = 12_000, overlap: int = 500) -> list[str]:
         """Split large content into overlapping chunks for LLM processing.

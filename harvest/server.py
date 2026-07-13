@@ -60,7 +60,7 @@ def create_app(config: Optional[Config] = None):
 
     class ExtractRequest(BaseModel):
         url: str
-        schema: dict
+        schema: dict  # type: ignore[assignment]
 
     class CrawlRequest(BaseModel):
         url: str
@@ -167,7 +167,7 @@ def create_app(config: Optional[Config] = None):
             if isinstance(r, Exception):
                 output.append({"url": urls[i], "error": str(r)})
             else:
-                output.append(r)
+                output.append(r)  # type: ignore[arg-type]
 
         return {"results": output, "total": len(output)}
 

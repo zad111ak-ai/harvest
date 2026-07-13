@@ -120,9 +120,9 @@ class Pipeline:
                 step["url"] = args[0] if args else ""
                 for arg in args[1:]:
                     if arg.startswith("--max-pages="):
-                        step["max_pages"] = int(arg.split("=")[1])
+                        step["max_pages"] = int(arg.split("=")[1])  # type: ignore[assignment]
                     elif arg.startswith("--delay="):
-                        step["delay"] = float(arg.split("=")[1])
+                        step["delay"] = float(arg.split("=")[1])  # type: ignore[assignment]
             elif cmd == "contacts":
                 step["url"] = args[0] if args else ""
             elif cmd == "export":
@@ -134,9 +134,9 @@ class Pipeline:
             elif cmd == "filter":
                 step["expression"] = " ".join(args)
             elif cmd == "sleep":
-                step["seconds"] = float(args[0]) if args else 1
+                step["seconds"] = float(args[0]) if args else 1  # type: ignore[assignment]
             elif cmd == "loop":
-                step["count"] = int(args[0]) if args else 3
+                step["count"] = int(args[0]) if args else 3  # type: ignore[assignment]
 
             steps.append(step)
 
@@ -178,7 +178,7 @@ class Pipeline:
         return await self.extractor.extract(url, schema)
 
     async def cmd_crawl(self, url: str, max_pages: int = 50, delay: float = 0.5, **kwargs) -> dict:
-        return await self.crawler.crawl(url, max_pages=max_pages, delay=delay)
+        return await self.crawler.crawl(url, max_pages=max_pages)
 
     async def cmd_contacts(self, url: str, depth: int = 2, **kwargs) -> dict:
         return await self.collector.collect(url, depth=depth)

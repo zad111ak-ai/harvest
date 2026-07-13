@@ -12,7 +12,7 @@ Usage:
 
 import asyncio
 import re
-from typing import Optional
+from typing import Any, Optional
 import httpx
 
 
@@ -29,10 +29,10 @@ class DriftzMail:
     @property
     def client(self) -> httpx.AsyncClient:
         if self._client is None:
-            kwargs = {"timeout": self.timeout, "headers": {"User-Agent": "Harvest/0.4"}}
+            client_kwargs: dict[str, Any] = {"timeout": self.timeout, "headers": {"User-Agent": "Harvest/0.4"}}
             if self.proxy:
-                kwargs["proxies"] = {"http://": self.proxy, "https://": self.proxy}
-            self._client = httpx.AsyncClient(**kwargs)
+                client_kwargs["proxies"] = {"http://": self.proxy, "https://": self.proxy}
+            self._client = httpx.AsyncClient(**client_kwargs)  # type: ignore[arg-type]
         return self._client
 
     async def close(self):

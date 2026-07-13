@@ -13,7 +13,7 @@ Usage:
 import asyncio
 import re
 import time
-from typing import Optional
+from typing import Any, Optional
 from urllib.parse import urljoin, urlparse
 from datetime import datetime
 
@@ -75,7 +75,7 @@ class SiteCrawler:
         include_re = re.compile(include_pattern) if include_pattern else None
         exclude_re = re.compile(exclude_pattern) if exclude_pattern else None
 
-        pages = []
+        pages: list[dict[str, Any]] = []
         dash = (
             Dashboard(total=max_pages, description=f"Crawling {urlparse(start_url).netloc}")
             if max_pages > 0

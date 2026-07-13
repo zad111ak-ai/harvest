@@ -30,10 +30,10 @@ class RobotsChecker:
                             rp.parse(text.splitlines())
                         else:
                             # No robots.txt = allow all
-                            rp.allow_all = True
+                            rp.parse(["User-agent: *", "Allow: /"])
             except Exception:
                 # Can't fetch robots.txt = allow all
-                rp.allow_all = True
+                rp.parse(["User-agent: *", "Allow: /"])
 
             self._cache[base] = rp
 

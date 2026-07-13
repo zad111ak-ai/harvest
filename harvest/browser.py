@@ -10,7 +10,7 @@ from typing import Optional, Callable, Any, Dict
 try:
     from scrapling.fetchers import AsyncStealthySession
 except ImportError:
-    AsyncStealthySession = None
+    AsyncStealthySession = None  # type: ignore[assignment,misc]
 
 
 class BrowserSession:
@@ -94,7 +94,7 @@ class BrowserSession:
         if additional_args:
             valid_args.update(additional_args)
 
-        self._session = AsyncStealthySession(**valid_args)
+        self._session = AsyncStealthySession(**valid_args)  # type: ignore[arg-type]
         self._started = False
 
     @classmethod
@@ -124,7 +124,7 @@ class BrowserSession:
             page_setup=page_setup,
             extraction_type=extraction_type,
             **kwargs,
-        )
+        )  # type: ignore[call-arg]
 
     async def close(self):
         if self._started:

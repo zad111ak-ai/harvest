@@ -119,6 +119,93 @@ harvest doctor
 
 ---
 
+## Preprocessing Modes (v0.6.2)
+
+Harvest has 4 preprocessing modes for different use cases. **Default is `full`** — safe, zero data loss.
+
+### Quick comparison
+
+| Mode | Token savings | Data loss risk | Best for |
+|---|---|---|---|
+| `full` | 0-40% | ❌ None | Default. Debugging. When you need every byte. |
+| `economy` | 70-90% | ⚠️ Low | LLM extraction. RAG systems. Embeddings. |
+| `hybrid` | 85-95% | ⚠️ Low | AI agents. Structured extraction pipelines. |
+| `auto` | varies | ⚠️ Low | Smart detection. Picks best mode per page. |
+
+### Usage
+
+```bash
+# Default: full mode (safe, preserves everything)
+harvest scrape https://example.com
+
+# Economy: save tokens for LLM processing
+harvest scrape https://shop.com --mode economy
+
+# Hybrid: economy + extraction context for AI
+harvest llm-extract https://shop.com --mode hybrid --prompt "Get all products"
+
+# Auto: smart detection (picks best mode automatically)
+harvest scrape https://any-site.com --mode auto
+```
+
+### What each mode does
+
+**`full` (default)**
+- Removes: scripts, styles, comments, hidden elements
+- Keeps: ALL content, navigation, footer, sidebar, links
+- Output: Markdown with all text and links preserved
+- Risk: None. You get everything the page had.
+
+**`economy`**
+- Removes: nav, footer, sidebar, ads, boilerplate, duplicate content
+- Keeps: main content only, links as `[text](url)`
+- For catalogs: keeps first 3 items, collapses rest ("...and 47 more")
+- Output: Clean Markdown, 70-90% smaller than raw
+- Risk: May remove some content on unusual page layouts
+- Safety: Falls back to `full` if it removes >85% on non-catalog pages
+
+**`hybrid`**
+- Everything `economy` does, PLUS:
+- Adds extraction context header for LLMs
+- Tells LLM: "This is a CATALOG with 20 items. Here are 3 examples. Extract all."
+- Output: Economy Markdown + extraction instructions
+- Risk: Same as economy. Context header adds ~200 chars.
+
+**`auto`**
+- Detects page type (article/catalog/mixed)
+- Articles → uses `economy` mode
+- Catalogs → uses `hybrid` mode
+- Falls back gracefully if detection fails
+- Risk: Same as underlying mode chosen
+
+### ⚠️ Honest trade-offs
+
+**What you lose with economy/hybrid:**
+- Navigation menus, footers, sidebars (usually useless)
+- Exact HTML structure (CSS classes, tag hierarchy)
+- Text inside images (infographics, screenshots)
+- Content hidden behind JS clicks ("Show phone number")
+
+**What you keep:**
+- All text content
+- All links as standard `[text](url)` Markdown
+- All prices, titles, descriptions
+- Semantic structure (headings, paragraphs, lists)
+
+**When to use `full`:**
+- Debugging what the page actually contains
+- Downstream parsers that need raw HTML structure
+- Sites where economy mode removes too much
+- When you're not sure what you need
+
+**When to use `economy` or `hybrid`:**
+- Sending content to LLM for extraction
+- Building RAG systems or embeddings
+- Processing many pages (cost savings compound)
+- Catalog/listing pages with repetitive structure
+
+---
+
 ## ✨ LLM Extraction (v0.5.0)
 
 **The killer feature.** No other free scraping tool has this.

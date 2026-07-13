@@ -38,7 +38,7 @@ class PluginManager:
 
     def __init__(self, plugin_dirs: Optional[list[str]] = None):
         self.plugin_dirs = plugin_dirs or []
-        self.plugins = []
+        self.plugins: list[PluginBase] = []
         self._loaded = False
 
     def discover(self) -> list[PluginBase]:

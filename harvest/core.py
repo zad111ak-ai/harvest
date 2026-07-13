@@ -3,7 +3,7 @@
 import asyncio
 import re
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from tenacity import (
     retry,
@@ -196,10 +196,10 @@ class Scraper:
         urls: list[str],
         selector: Optional[str] = None,
         extraction: str = "markdown",
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         tasks = [self.scrape(url, selector, extraction) for url in urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
-        output = []
+        output: list[dict[str, Any]] = []
         for i, r in enumerate(results):
             if isinstance(r, Exception):
                 output.append(
@@ -210,7 +210,7 @@ class Scraper:
                     }
                 )
             else:
-                output.append(r)
+                output.append(r)  # type: ignore[arg-type]
         return output
 
     async def evaluate(self, url: str, js_expression: str) -> Any:
@@ -220,7 +220,7 @@ class Scraper:
         await session.fetch(url, extraction_type="text")
         return await session.evaluate(js_expression)
 
-    async def browse(self, url: str, page_action: callable) -> Any:
+    async def browse(self, url: str, page_action: Callable[..., Any]) -> Any:
         async with BrowserSession(proxy=self.proxy, headless=self.headless) as session:
             return await session.fetch(url, page_action=page_action)
 

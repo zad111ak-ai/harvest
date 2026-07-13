@@ -83,10 +83,10 @@ class ProxyRotator:
             proxy = self._domain_affinity[domain]
             if proxy in self.healthy:
                 return proxy
-        proxy = await self.get()
-        if proxy:
-            self._domain_affinity[domain] = proxy
-        return proxy
+        new_proxy: Optional[str] = await self.get()
+        if new_proxy:
+            self._domain_affinity[domain] = new_proxy
+        return new_proxy
 
     @staticmethod
     def get_domain(url: str) -> str:

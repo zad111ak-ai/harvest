@@ -95,7 +95,7 @@ class Config:
         current = self._data
         for key in keys:
             if isinstance(current, dict):
-                current = current.get(key)
+                current = current.get(key, default)
                 if current is None:
                     return default
             else:

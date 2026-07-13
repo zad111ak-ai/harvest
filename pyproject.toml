@@ -4,7 +4,7 @@ build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "harvest-agent"
-version = "0.6.1"
+version = "0.6.2"
 description = "Universal web collection engine — extract, monitor, and search any website through Cloudflare"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -38,3 +38,6 @@ harvest = "harvest.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["harvest*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"

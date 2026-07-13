@@ -8,7 +8,7 @@ Shows live progress during crawl/batch operations:
 """
 
 import time
-from typing import Optional
+from typing import Any
 
 try:
     from rich.console import Console
@@ -41,8 +41,8 @@ class Dashboard:
         self.skipped = 0
         self.start_time = time.monotonic()
         self.current_url = ""
-        self._progress: Optional[object] = None
-        self._live: Optional[object] = None
+        self._progress: Any = None
+        self._live: Any = None
         self._task_id = None
 
         if HAVE_RICH:
@@ -84,7 +84,7 @@ class Dashboard:
             self._live.stop()
         self._print_summary()
 
-    def _render(self) -> object:
+    def _render(self) -> Any:
         """Render current state as Rich renderable."""
         if not HAVE_RICH:
             return ""

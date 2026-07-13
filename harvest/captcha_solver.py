@@ -18,7 +18,7 @@ from loguru import logger
 try:
     from playwright.async_api import Page
 except ImportError:
-    Page = None
+    Page = None  # type: ignore[assignment,misc]
 
 
 class CaptchaSolver:

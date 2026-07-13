@@ -65,12 +65,12 @@ class TelegramNotifier(Notifier):
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=payload, timeout=15) as resp:
+                async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=15)) as resp:
                     if resp.status != 200:
                         logger.error(f"Telegram API error: {resp.status}")
                         # Try without parse_mode
                         payload["parse_mode"] = ""
-                        async with session.post(url, json=payload, timeout=15) as resp2:
+                        async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=15)) as resp2:
                             return resp2.status == 200
                     return True
         except Exception as e:
@@ -99,7 +99,7 @@ class WebhookNotifier(Notifier):
 
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.post(self.url, json=data, timeout=15) as resp:
+                async with session.post(self.url, json=data, timeout=aiohttp.ClientTimeout(total=15)) as resp:
                     return resp.status < 400
         except Exception as e:
             logger.error(f"Webhook failed: {e}")

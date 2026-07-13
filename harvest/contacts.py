@@ -3,6 +3,7 @@ Contacts — Extract emails and contact information from websites.
 """
 
 import re
+from typing import Any
 from urllib.parse import urlparse
 
 from .core import Scraper
@@ -30,7 +31,7 @@ class ContactCollector:
         Returns:
             dict with emails, social_links, pages_checked
         """
-        result = {
+        result: dict[str, Any] = {
             "url": url,
             "emails": [],
             "social_links": [],

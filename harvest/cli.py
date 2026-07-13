@@ -68,6 +68,13 @@ def build_parser() -> argparse.ArgumentParser:
         default="json",
         help="Output format",
     )
+    p_scrape.add_argument(
+        "--mode",
+        "-m",
+        choices=["full", "economy", "hybrid", "auto"],
+        default="full",
+        help="Preprocessing mode: full (safe), economy (save tokens), hybrid (economy+context), auto (smart detect)",
+    )
 
     # ── extract ── Browse AI killer: structured data by schema ──
     p_extract = sub.add_parser(
@@ -138,6 +145,12 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["json", "md", "txt"],
         default="json",
         help="Output format",
+    )
+    p_llm.add_argument(
+        "--mode",
+        choices=["full", "economy", "hybrid", "auto"],
+        default="full",
+        help="Preprocessing mode for HTML cleaning before LLM extraction",
     )
 
     # ── map ──
@@ -226,6 +239,23 @@ def build_parser() -> argparse.ArgumentParser:
 async def cmd_scrape(args):
     scraper = Scraper(proxy=args.proxy, headless=not args.no_headless)
     result = await scraper.scrape(args.url, selector=args.selector)
+
+    # Apply preprocessing mode
+    mode = getattr(args, "mode", "full")
+    if mode != "full" and result.get("content"):
+        from harvest.preprocess import HTMLPreprocessor
+
+        preprocessor = HTMLPreprocessor(mode=mode)
+        cleaned = preprocessor.clean(result["content"])
+        result["content"] = cleaned.text
+        result["_preprocess"] = {
+            "mode": preprocessor.stats.mode_used,
+            "page_type": preprocessor.stats.page_type,
+            "compression": f"{preprocessor.stats.compression_ratio:.0%}",
+            "tokens_saved": preprocessor.stats.estimated_tokens_saved,
+        }
+        if preprocessor.stats.warnings:
+            result["_preprocess"]["warnings"] = preprocessor.stats.warnings
 
     if args.output == "csv":
         csv_output = Exporter.to_csv(result)
@@ -503,11 +533,13 @@ async def cmd_llm_extract(args):
     if args.schema:
         schema = load_schema(args.schema)
 
+    mode = getattr(args, "mode", "full")
     llm = LLMExtractor(base_url=base_url, model=model, api_key=api_key)
     result = await llm.extract(
         url=args.url,
         description=args.prompt,
         schema=schema,
+        preprocess_mode=mode,
     )
 
     if args.output == "json":
