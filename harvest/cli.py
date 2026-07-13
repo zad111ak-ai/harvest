@@ -22,6 +22,7 @@ Browse AI killer features:
 import argparse
 import asyncio
 import json
+import logging
 from pathlib import Path
 
 from . import __version__
@@ -34,6 +35,8 @@ from .export import Exporter
 from .notify import Notifier
 from .config import Config
 from .batch import BatchProcessor
+
+logger = logging.getLogger(__name__)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -148,9 +151,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_llm.add_argument(
         "--mode",
-        choices=["full", "economy", "hybrid", "auto"],
+        choices=["full", "economy", "hybrid", "auto", "hybrid-vision"],
         default="full",
-        help="Preprocessing mode for HTML cleaning before LLM extraction",
+        help="Preprocessing mode (hybrid-vision: HTML + screenshot fallback)",
     )
     p_llm.add_argument(
         "--semantic-cache",
@@ -161,6 +164,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--self-healing",
         action="store_true",
         help="Auto-regenerate broken CSS selectors via LLM",
+    )
+    p_llm.add_argument(
+        "--vision",
+        action="store_true",
+        help="Use vision model (screenshot + LLM) for extraction",
+    )
+    p_llm.add_argument(
+        "--screenshot",
+        help="Use pre-existing screenshot file for vision extraction",
     )
 
     # ── map ──
@@ -597,6 +609,34 @@ async def cmd_llm_extract(args):
         await llm.close()
         return
 
+    # Vision extraction
+    use_vision = getattr(args, "vision", False)
+    screenshot_path = getattr(args, "screenshot", None)
+    if use_vision or mode == "hybrid-vision":
+        from .vision_extractor import VisionExtractor
+
+        _vision = VisionExtractor(base_url=base_url, model=model, api_key=api_key)
+        result = await _vision.extract(
+            url=args.url,
+            prompt=args.prompt,
+            screenshot_path=screenshot_path,
+        )
+
+        # If hybrid-vision and vision failed, fallback to HTML extraction
+        if mode == "hybrid-vision" and (result.get("error") or not result.get("extracted")):
+            logger.info("Vision failed, falling back to HTML extraction")
+            result = await llm.extract(
+                url=args.url,
+                description=args.prompt,
+                schema=schema,
+                preprocess_mode="economy",
+            )
+            result["vision_fallback"] = True
+
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        await llm.close()
+        return
+
     result = await llm.extract(
         url=args.url,
         description=args.prompt,
@@ -740,6 +780,27 @@ async def cmd_screenshot(args):
             ensure_ascii=False,
         )
     )
+
+
+async def cmd_compliance(args):
+    """Check legal compliance for web scraping."""
+    from .compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    skip_robots = getattr(args, "skip_robots", False)
+    skip_pii = getattr(args, "skip_pii", False)
+
+    result = await checker.check(
+        url=args.url,
+        data=args.data,
+        check_robots=not skip_robots,
+        check_pii=not skip_pii,
+    )
+
+    if args.format == "json":
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    else:
+        print(checker.generate_report(result, format="text"))
 
 
 async def cmd_batch(args):

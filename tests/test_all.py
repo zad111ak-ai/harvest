@@ -1150,3 +1150,347 @@ def test_self_healing_working_selectors():
         assert result["healed"] is False
         assert result["data"]["price"] == "$50"
         assert "working" in result["details"]
+
+
+# ── VisionExtractor tests ──
+
+
+def test_vision_extractor_init():
+    """VisionExtractor should initialize with config."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor()
+    assert extractor.base_url == "http://localhost:3000/v1"
+    assert extractor.model == "auto/best-chat"
+    assert extractor.timeout == 60
+
+
+def test_vision_extractor_custom_config():
+    """VisionExtractor should accept custom config."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor(
+        base_url="http://custom:8080/v1",
+        model="gpt-4-vision",
+        api_key="test-key",
+        timeout=30,
+    )
+    assert extractor.base_url == "http://custom:8080/v1"
+    assert extractor.model == "gpt-4-vision"
+    assert extractor.api_key == "test-key"
+    assert extractor.timeout == 30
+
+
+def test_vision_extractor_parse_json():
+    """VisionExtractor should parse JSON from LLM response."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor()
+
+    # Direct JSON
+    result = extractor._parse_llm_response('{"price": "$99"}')
+    assert result == {"price": "$99"}
+
+    # JSON in code block
+    result = extractor._parse_llm_response('```json\n{"price": "$99"}\n```')
+    assert result == {"price": "$99"}
+
+    # JSON array
+    result = extractor._parse_llm_response('[{"title": "Book"}]')
+    assert result == [{"title": "Book"}]
+
+
+def test_vision_extractor_parse_fallback():
+    """VisionExtractor should handle non-JSON responses."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor()
+
+    # Plain text
+    result = extractor._parse_llm_response("The price is $99")
+    assert "raw_response" in result
+
+    # Empty
+    result = extractor._parse_llm_response("")
+    assert "raw_response" in result
+
+
+def test_vision_extractor_encode_image():
+    """VisionExtractor should encode images to base64."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor()
+
+    # Create a temp image
+    import base64
+
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+        # Write PNG header + minimal data
+        f.write(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
+        img_path = f.name
+
+    try:
+        result = extractor._encode_image(img_path)
+        assert result is not None
+        assert len(result) > 0
+        # Verify it's valid base64
+        decoded = base64.b64decode(result)
+        assert len(decoded) > 0
+    finally:
+        Path(img_path).unlink(missing_ok=True)
+
+
+def test_vision_extractor_encode_nonexistent():
+    """VisionExtractor should handle nonexistent files."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor()
+    result = extractor._encode_image("/nonexistent/image.png")
+    assert result is None
+
+
+def test_vision_extractor_system_prompt():
+    """VisionExtractor should build system prompts."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor()
+
+    # Without context
+    prompt = extractor._build_system_prompt()
+    assert "data extraction" in prompt.lower()
+
+    # With context
+    prompt = extractor._build_system_prompt("Catalog page")
+    assert "Catalog page" in prompt
+
+
+def test_vision_extractor_user_prompt():
+    """VisionExtractor should build user prompts."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor()
+    prompt = extractor._build_user_prompt("https://shop.com", "Find prices")
+    assert "https://shop.com" in prompt
+    assert "Find prices" in prompt
+
+
+def test_vision_extractor_extract_no_screenshot():
+    """VisionExtractor should handle screenshot failure gracefully."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor()
+    result = asyncio.run(
+        extractor.extract(
+            url="https://nonexistent.example.com",
+            prompt="Find prices",
+        )
+    )
+    # Should not crash, return error or extracted
+    assert "url" in result
+    assert "method" in result
+    assert result["method"] == "vision"
+
+
+def test_vision_extractor_with_preexisting_screenshot():
+    """VisionExtractor should use pre-existing screenshot."""
+    from harvest.vision_extractor import VisionExtractor
+
+    extractor = VisionExtractor()
+
+    # Create a dummy screenshot file
+    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+        f.write(b"\x89PNG\r\n\x1a\n" + b"\x00" * 100)
+        screenshot_path = f.name
+
+    try:
+        # This will fail at API call, but should handle gracefully
+        result = asyncio.run(
+            extractor.extract(
+                url="https://example.com",
+                prompt="Find data",
+                screenshot_path=screenshot_path,
+            )
+        )
+        assert "url" in result
+        assert "method" in result
+    finally:
+        Path(screenshot_path).unlink(missing_ok=True)
+
+
+# ── ComplianceChecker tests ──
+
+
+def test_compliance_checker_init():
+    """ComplianceChecker should initialize with defaults."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    assert "HarvestBot" in checker.user_agent
+    assert checker.timeout == 10
+
+
+def test_compliance_checker_pii_email():
+    """ComplianceChecker should detect emails."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    text = "Contact us at support@example.com or sales@company.org"
+    result = checker.check_data(text)
+    assert result["pii_count"] >= 2
+    assert any(p["type"] == "email" for p in result["pii_detected"])
+
+
+def test_compliance_checker_pii_phone():
+    """ComplianceChecker should detect phone numbers."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    text = "Call us at +1-555-123-4567 or (555) 987-6543"
+    result = checker.check_data(text)
+    assert result["pii_count"] >= 2
+    assert any(p["type"].startswith("phone") for p in result["pii_detected"])
+
+
+def test_compliance_checker_pii_credit_card():
+    """ComplianceChecker should detect credit card numbers."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    text = "Card number: 4111-1111-1111-1111"
+    result = checker.check_data(text)
+    assert result["pii_count"] >= 1
+    assert any(p["type"] == "credit_card" for p in result["pii_detected"])
+    assert result["risk_score"] > 0.0  # Critical severity = risk > 0
+
+
+def test_compliance_checker_pii_ssn():
+    """ComplianceChecker should detect SSN."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    text = "SSN: 123-45-6789"
+    result = checker.check_data(text)
+    assert result["pii_count"] >= 1
+    assert any(p["type"] == "ssn" for p in result["pii_detected"])
+    assert result["risk_score"] > 0.0  # Critical severity = risk > 0
+
+
+def test_compliance_checker_no_pii():
+    """ComplianceChecker should handle clean text."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    text = "The product costs $99 and has 5 stars rating"
+    result = checker.check_data(text)
+    assert result["pii_count"] == 0
+    assert result["risk_score"] == 0.0
+    assert "No PII detected" in result["recommendations"][0]
+
+
+def test_compliance_checker_risk_score():
+    """ComplianceChecker should calculate risk scores."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+
+    # Clean text = low risk
+    result = checker.check_data("Product page with prices")
+    assert result["risk_score"] == 0.0
+
+    # Multiple PII = some risk
+    result = checker.check_data("Email: test@test.com, SSN: 123-45-6789, Card: 4111-1111-1111-1111")
+    assert result["risk_score"] > 0.0
+
+
+def test_compliance_checker_report_text():
+    """ComplianceChecker should generate text reports."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    result = {
+        "url": "https://example.com",
+        "risk_score": 0.3,
+        "is_compliant": True,
+        "robots_txt": {"allowed": True},
+        "pii_detected": [],
+        "recommendations": ["✅ Low risk"],
+        "errors": [],
+    }
+    report = checker.generate_report(result, format="text")
+    assert "COMPLIANCE REPORT" in report
+    assert "https://example.com" in report
+    assert "0.30" in report
+
+
+def test_compliance_checker_report_json():
+    """ComplianceChecker should generate JSON reports."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    result = {"url": "https://example.com", "risk_score": 0.0}
+    report = checker.generate_report(result, format="json")
+    import json
+
+    parsed = json.loads(report)
+    assert parsed["url"] == "https://example.com"
+
+
+def test_compliance_checker_robots_parse():
+    """ComplianceChecker should parse robots.txt."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    robots_txt = """
+User-agent: *
+Disallow: /admin/
+Disallow: /private/
+Allow: /public/
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://example.com/sitemap.xml
+"""
+    parsed = checker._parse_robots(robots_txt)
+    assert "*" in parsed["user_agents"]
+    assert "/admin/" in parsed["user_agents"]["*"]["disallow"]
+    assert len(parsed["sitemaps"]) == 1
+
+
+def test_compliance_checker_robots_evaluate():
+    """ComplianceChecker should evaluate robots.txt rules."""
+    from harvest.compliance import ComplianceChecker
+
+    checker = ComplianceChecker()
+    rules = {"user_agents": {"*": {"allow": ["/public/"], "disallow": ["/admin/", "/private/"]}}}
+
+    # Allowed path
+    result = checker._evaluate_robots(rules, "https://example.com/public/page")
+    assert result["allowed"] is True
+
+    # Disallowed path
+    result = checker._evaluate_robots(rules, "https://example.com/admin/settings")
+    assert result["allowed"] is False
+
+
+def test_compliance_checker_robots_fetch():
+    """ComplianceChecker should fetch robots.txt from real sites."""
+    from harvest.compliance import ComplianceChecker
+    import asyncio
+
+    checker = ComplianceChecker()
+    result = asyncio.run(checker._check_robots("https://httpbin.org/robots.txt"))
+    # httpbin doesn't have robots.txt, so should allow
+    assert result["allowed"] is True
+
+
+def test_compliance_checker_check_url():
+    """ComplianceChecker should run full check on URL."""
+    from harvest.compliance import ComplianceChecker
+    import asyncio
+
+    checker = ComplianceChecker()
+    result = asyncio.run(checker.check("https://httpbin.org/get"))
+    assert "risk_score" in result
+    assert "is_compliant" in result
+    assert "recommendations" in result
