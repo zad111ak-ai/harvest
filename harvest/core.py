@@ -5,6 +5,13 @@ import re
 from datetime import datetime
 from typing import Any, Optional
 
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
+
 from .browser import BrowserSession
 from .cache import ResponseCache
 from .captcha_solver import CaptchaSolver
@@ -27,6 +34,14 @@ class Scraper:
     Handles Cloudflare, Turnstile/hCaptcha, JS rendering, anti-bot protections.
     Reuses one browser session for all requests.
     """
+
+    # Retry config for transient errors
+    _retry = retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=1, max=30),
+        retry=retry_if_exception_type((TimeoutError, ConnectionError, OSError)),
+        reraise=True,
+    )
 
     def __init__(
         self,

@@ -4,7 +4,7 @@ build-backend = "setuptools.backends._legacy:_Backend"
 
 [project]
 name = "harvest-agent"
-version = "0.6.0"
+version = "0.6.1"
 description = "Universal web collection engine — extract, monitor, and search any website through Cloudflare"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -23,13 +23,15 @@ dependencies = [
     "aiohttp>=3.9",
     "loguru>=0.7",
     "pydantic>=2.0",
+    "tenacity>=8.0",
 ]
 
 [project.optional-dependencies]
 llm = ["openai>=1.0"]
 yolo = ["ultralytics>=8.0"]
 server = ["fastapi>=0.109.0", "uvicorn>=0.27.0"]
-all = ["harvest-agent[llm,yolo,server]"]
+rich = ["rich>=13.0"]
+all = ["harvest-agent[llm,yolo,server,rich]"]
 
 [project.scripts]
 harvest = "harvest.cli:main"

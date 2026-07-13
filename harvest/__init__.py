@@ -18,7 +18,7 @@ from .driftz import DriftzMail
 from .crawl import SiteCrawler
 from .export import Exporter
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 __all__ = [
     "Scraper",

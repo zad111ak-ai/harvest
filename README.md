@@ -1,6 +1,6 @@
 # Harvest
 
-Universal web collection engine — extract, monitor, crawl, and search any website through Cloudflare and anti-bot protections. **Free, open-source, runs on your machine.** v0.6.0
+Universal web collection engine — extract, monitor, crawl, and search any website through Cloudflare and anti-bot protections. **Free, open-source, runs on your machine.** v0.6.1
 
 ![Logo](./logo.svg)
 
@@ -279,7 +279,7 @@ pip install -e .
 
 ---
 
-## v0.6.0 Changelog
+## v0.6.1 Changelog
 
 - ✨ **`harvest llm-extract`** — AI-powered extraction via CLI (was advertised but missing!)
 - ✨ **`harvest map`** — Instant URL discovery (sitemap, robots.txt, homepage links)
