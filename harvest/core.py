@@ -18,6 +18,8 @@ from .captcha_solver import CaptchaSolver
 from .proxy_rotator import ProxyRotator
 from .rate_limiter import RateLimiter
 from .stealth import Stealth
+from .failures import FailureTracker
+from .robots import RobotsChecker
 
 # Optional AdaptiveCore integration
 try:
@@ -54,6 +56,8 @@ class Scraper:
         domain_limits: Optional[dict[str, int]] = None,
         cache_ttl: int = 300,
         proxy_pool: Optional[list[str]] = None,
+        respect_robots: bool = True,
+        track_failures: bool = True,
     ):
         self.proxy = proxy
         self.headless = headless
@@ -73,6 +77,8 @@ class Scraper:
             self.captcha_solver = CaptchaSolver()
         if use_stealth:
             self.stealth = Stealth()
+        self.robots = RobotsChecker() if respect_robots else None
+        self.failure_tracker = FailureTracker() if track_failures else None
 
     async def _get_session(self, url: str = "") -> BrowserSession:
         """Get or create persistent browser session with domain-aware proxy."""
@@ -105,6 +111,9 @@ class Scraper:
         selector: Optional[str] = None,
         extraction: str = "markdown",
     ) -> dict:
+        # Check robots.txt
+        if self.robots and not await self.robots.can_fetch(url):
+            raise PermissionError(f"Blocked by robots.txt: {url}")
         try:
             cached = self.cache.get(url)
             if cached:
@@ -167,6 +176,9 @@ class Scraper:
             self.cache.set(url, result)
             return result
         except Exception as e:
+            # Record failure for retry/analysis
+            if self.failure_tracker:
+                self.failure_tracker.record_failure(url, str(e), context="scrape")
             if HAVE_ADAPTIVE:
                 try:
                     capture_record(

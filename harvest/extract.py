@@ -245,8 +245,32 @@ class LLMExtractor:
         else:
             content = content[:15_000]
 
-        prompt = self._build_prompt(description, content, schema)
-        extracted = await self._call_llm(prompt, schema, pydantic_model=pydantic_model)
+        # Auto-chunk large pages
+        chunks = self._chunk_content(content)
+        if len(chunks) > 1:
+            log.info(f"Page split into {len(chunks)} chunks for LLM processing")
+            chunk_results = await self._extract_from_chunks(chunks, description, schema, pydantic_model)
+            # Merge chunk results
+            if len(chunk_results) == 1:
+                extracted = chunk_results[0]
+            else:
+                # For lists, flatten; for dicts, merge
+                if isinstance(chunk_results[0], list):
+                    extracted = [
+                        item for chunk in chunk_results for item in (chunk if isinstance(chunk, list) else [chunk])
+                    ]
+                elif isinstance(chunk_results[0], dict):
+                    extracted = {}
+                    for chunk in chunk_results:
+                        if isinstance(chunk, dict):
+                            extracted.update(chunk)
+                        else:
+                            extracted[f"chunk_{chunk_results.index(chunk)}"] = chunk
+                else:
+                    extracted = chunk_results
+        else:
+            prompt = self._build_prompt(description, content, schema)
+            extracted = await self._call_llm(prompt, schema, pydantic_model=pydantic_model)
 
         return {
             "url": url,
@@ -268,6 +292,48 @@ class LLMExtractor:
         """Extract data from multiple URLs with the same description."""
         tasks = [self.extract(url, description, schema, pydantic_model, extraction) for url in urls]
         return await asyncio.gather(*tasks, return_exceptions=True)
+
+    def _chunk_content(self, content: str, max_chars: int = 12_000, overlap: int = 500) -> list[str]:
+        """Split large content into overlapping chunks for LLM processing.
+
+        Each chunk is at most max_chars, with overlap characters shared between chunks
+        to avoid missing data at boundaries.
+        """
+        if len(content) <= max_chars:
+            return [content]
+
+        chunks = []
+        start = 0
+        while start < len(content):
+            end = start + max_chars
+            # Try to break at a paragraph or sentence boundary
+            if end < len(content):
+                # Look for paragraph break
+                break_at = content.rfind("\n\n", start + max_chars // 2, end)
+                if break_at == -1:
+                    # Look for sentence break
+                    break_at = content.rfind(". ", start + max_chars // 2, end)
+                if break_at != -1:
+                    end = break_at + 1
+            chunks.append(content[start:end])
+            start = end - overlap if end < len(content) else end
+        return chunks
+
+    async def _extract_from_chunks(
+        self,
+        chunks: list[str],
+        description: str,
+        schema: Optional[dict] = None,
+        pydantic_model: Optional[type[BaseModel]] = None,
+    ) -> list[Any]:
+        """Process each chunk separately and return list of results."""
+        results = []
+        for i, chunk in enumerate(chunks):
+            log.info(f"Processing chunk {i + 1}/{len(chunks)} ({len(chunk)} chars)")
+            prompt = self._build_prompt(f"{description} (chunk {i + 1}/{len(chunks)})", chunk, schema)
+            extracted = await self._call_llm(prompt, schema, pydantic_model=pydantic_model)
+            results.append(extracted)
+        return results
 
     def _build_prompt(self, description: str, content: str, schema: Optional[dict] = None) -> str:
         prompt = f"""Extract the following information from the web page content below.
