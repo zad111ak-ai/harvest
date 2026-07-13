@@ -345,7 +345,7 @@ def create_server():
         """
         return json.dumps(
             {
-                "version": "0.6.1",
+                "version": "0.6.2",
                 "proxy_configured": bool(default_proxy),
                 "headless": default_headless,
                 "config_file": str(Path.home() / ".harvest" / "config.yaml"),
