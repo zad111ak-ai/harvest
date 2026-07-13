@@ -17,6 +17,11 @@ from .batch import BatchProcessor
 from .driftz import DriftzMail
 from .crawl import SiteCrawler
 from .export import Exporter
+from .dashboard import Dashboard
+from .robots import RobotsChecker
+from .logger import StructuredLogger
+from .preprocess import clean_html_for_llm
+from .failures import FailureTracker
 
 __version__ = "0.6.1"
 
@@ -33,5 +38,10 @@ __all__ = [
     "DriftzMail",
     "SiteCrawler",
     "Exporter",
+    "Dashboard",
+    "RobotsChecker",
+    "StructuredLogger",
+    "clean_html_for_llm",
+    "FailureTracker",
     "__version__",
 ]

@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional
 
 from .core import Scraper
+from .dashboard import Dashboard
 from .export import Exporter
 from .extract import SchemaExtractor
 
@@ -127,17 +128,22 @@ class BatchProcessor:
                                 "attempts": attempt + 1,
                             }
 
+        dash = Dashboard(total=len(urls), description="Batch processing")
+        dash.start()
         tasks = [process_one(url) for url in urls]
         outputs = await asyncio.gather(*tasks)
 
         for out in outputs:
             if out["status"] == "ok":
+                dash.update(out["url"], success=True)
                 result.success += 1
                 result.results.append(out)
             else:
+                dash.update(out["url"], success=False)
                 result.failed += 1
                 result.errors.append(out)
 
+        dash.stop()
         result.duration = time.time() - start
         return result
 

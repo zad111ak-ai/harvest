@@ -18,6 +18,7 @@ from urllib.parse import urljoin, urlparse
 from datetime import datetime
 
 from .core import Scraper
+from .dashboard import Dashboard, NullDashboard
 
 
 class SiteCrawler:
@@ -75,6 +76,12 @@ class SiteCrawler:
         exclude_re = re.compile(exclude_pattern) if exclude_pattern else None
 
         pages = []
+        dash = (
+            Dashboard(total=max_pages, description=f"Crawling {urlparse(start_url).netloc}")
+            if max_pages > 0
+            else NullDashboard()
+        )
+        dash.start()
         sitemap_urls = []
 
         # Step 1: Discover sitemap
@@ -124,8 +131,10 @@ class SiteCrawler:
                                 continue
                             to_visit.append(link)
 
+                dash.update(url, success=True)
                 return result
             except Exception as e:
+                dash.update(url, success=False)
                 return {
                     "url": url,
                     "error": str(e),
@@ -143,6 +152,7 @@ class SiteCrawler:
             if i > max_pages * 3:  # Safety: skip queue emptier
                 break
 
+        dash.stop()
         return {
             "start_url": start_url,
             "total_pages": len(pages),
