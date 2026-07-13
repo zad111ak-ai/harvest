@@ -152,6 +152,16 @@ def build_parser() -> argparse.ArgumentParser:
         default="full",
         help="Preprocessing mode for HTML cleaning before LLM extraction",
     )
+    p_llm.add_argument(
+        "--semantic-cache",
+        action="store_true",
+        help="Use semantic cache to save LLM tokens on similar queries",
+    )
+    p_llm.add_argument(
+        "--self-healing",
+        action="store_true",
+        help="Auto-regenerate broken CSS selectors via LLM",
+    )
 
     # ── map ──
     p_map = sub.add_parser(
@@ -166,6 +176,28 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser(
         "doctor",
         help="Check Harvest installation health",
+    )
+    # ── diff (structural) ──
+    p_diff = sub.add_parser(
+        "diff",
+        help="Structural diff — detect what changed in page DOM",
+    )
+    p_diff.add_argument("url", help="Page URL")
+    p_diff.add_argument("--html-old", help="Path to old HTML file for comparison")
+    p_diff.add_argument("--html-new", help="Path to new HTML file for comparison")
+
+    # ── snapshot ──
+    p_snapshot = sub.add_parser(
+        "snapshot",
+        help="Capture DOM structure snapshot for later diff",
+    )
+    p_snapshot.add_argument("url", help="Page URL")
+    p_snapshot.add_argument("--output", "-o", choices=["json", "txt"], default="json", help="Output format")
+
+    # ── cache-stats ──
+    sub.add_parser(
+        "cache-stats",
+        help="Show semantic cache statistics",
     )
 
     # ── screenshot ──
@@ -534,13 +566,54 @@ async def cmd_llm_extract(args):
         schema = load_schema(args.schema)
 
     mode = getattr(args, "mode", "full")
+    use_semantic_cache = getattr(args, "semantic_cache", False)
+    use_self_healing = getattr(args, "self_healing", False)
+
     llm = LLMExtractor(base_url=base_url, model=model, api_key=api_key)
+
+    # Semantic cache check
+    if use_semantic_cache:
+        from .semantic_cache import SemanticCache
+
+        _sem_cache = SemanticCache()
+        cached = _sem_cache.get(url=args.url, prompt=args.prompt)
+        if cached:
+            result = {"url": args.url, "cached": True, "extracted": cached}
+            print(json.dumps(result, indent=2, ensure_ascii=False))
+            await llm.close()
+            return
+
+    # Self-healing extraction
+    if use_self_healing:
+        from .self_healing import SelfHealingParser
+
+        _sh = SelfHealingParser(url=args.url, llm_base_url=base_url, llm_model=model, llm_api_key=api_key)
+        result = await llm.extract(url=args.url, description=args.prompt, schema=schema, preprocess_mode=mode)
+        html = result.get("content", "")
+        if schema and html:
+            heal_result = await _sh.extract(html=html, schema=schema)
+            result["self_healing"] = heal_result
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        await llm.close()
+        return
+
     result = await llm.extract(
         url=args.url,
         description=args.prompt,
         schema=schema,
         preprocess_mode=mode,
     )
+    # Store in semantic cache if enabled
+    if use_semantic_cache:
+        from .semantic_cache import SemanticCache
+
+        _sem_cache = SemanticCache()
+        _sem_cache.set(
+            url=args.url,
+            prompt=args.prompt,
+            html=result.get("content", ""),
+            response=result.get("extracted", {}),
+        )
 
     if args.output == "json":
         print(json.dumps(result, indent=2, ensure_ascii=False))
@@ -561,6 +634,86 @@ async def cmd_llm_extract(args):
             print(extracted)
 
     await llm.close()
+
+
+async def cmd_diff(args):
+    """Structural diff — detect what changed in page DOM."""
+    from .structural_diff import StructuralDiff
+
+    differ = StructuralDiff()
+
+    if args.html_old and args.html_new:
+        old_html = Path(args.html_old).read_text(encoding="utf-8")
+        new_html = Path(args.html_new).read_text(encoding="utf-8")
+        result = differ.diff(old_html=old_html, new_html=new_html, url=args.url)
+    else:
+        # Scrape current and compare with saved snapshot
+        scraper = Scraper(proxy=args.proxy, headless=not args.no_headless)
+        current = await scraper.scrape(args.url, extraction="html")
+        new_html = current.get("content", "")
+        old_snap = differ.load_snapshot(args.url)
+        if old_snap:
+            # Compare with saved snapshot
+            from .structural_diff import _extract_structure
+
+            old_structure = old_snap
+            new_structure = _extract_structure(new_html)
+            from .structural_diff import _find_added, _find_removed, _find_changed, _generate_summary
+
+            added = _find_added(old_structure, new_structure)
+            removed = _find_removed(old_structure, new_structure)
+            changed = _find_changed(old_structure, new_structure)
+            result = {
+                "url": args.url,
+                "added": added[:20],
+                "removed": removed[:20],
+                "changed": changed[:20],
+                "summary": _generate_summary(added, removed, changed),
+            }
+        else:
+            differ.capture(new_html, url=args.url)
+            result = {"url": args.url, "message": "First snapshot captured. Run again to see diff."}
+
+    print(json.dumps(result, indent=2, ensure_ascii=False))
+
+
+async def cmd_snapshot(args):
+    """Capture DOM structure snapshot."""
+    from .structural_diff import StructuralDiff
+
+    differ = StructuralDiff()
+    scraper = Scraper(proxy=args.proxy, headless=not args.no_headless)
+    result = await scraper.scrape(args.url, extraction="html")
+    html = result.get("content", "")
+    structure = differ.capture(html, url=args.url)
+
+    if args.output == "txt":
+        for elem in structure[:50]:
+            attrs = " ".join(f'{k}="{v}"' for k, v in elem.get("attrs", {}).items())
+            text = elem.get("text_preview", "")[:60]
+            print(f"  <{elem['tag']}> {attrs} → {text}")
+    else:
+        print(
+            json.dumps(
+                {
+                    "url": args.url,
+                    "elements": len(structure),
+                    "structure": structure[:50],
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+
+    print(f"\n✓ Snapshot saved for {args.url}", file=__import__("sys").stderr)
+
+
+async def cmd_cache_stats(args):
+    """Show semantic cache statistics."""
+    from .semantic_cache import SemanticCache
+
+    cache = SemanticCache()
+    print(json.dumps(cache.stats(), indent=2, ensure_ascii=False))
 
 
 async def cmd_screenshot(args):
@@ -678,6 +831,9 @@ def main():
         "llm-extract": cmd_llm_extract,
         "map": cmd_map,
         "doctor": cmd_doctor,
+        "diff": cmd_diff,
+        "snapshot": cmd_snapshot,
+        "cache-stats": cmd_cache_stats,
         "screenshot": cmd_screenshot,
         "batch": cmd_batch,
         "serve": cmd_serve,

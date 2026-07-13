@@ -2,7 +2,6 @@
 
 Extract structured data, monitor changes, collect contacts, crawl sites.
 Built on Scrapling for Cloudflare bypass and anti-bot evasion.
-
 Features that cost $50-200/mo elsewhere — free here.
 """
 
@@ -22,8 +21,11 @@ from .robots import RobotsChecker
 from .logger import StructuredLogger
 from .preprocess import clean_html_for_llm
 from .failures import FailureTracker
+from .semantic_cache import SemanticCache
+from .structural_diff import StructuralDiff
+from .self_healing import SelfHealingParser
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 
 __all__ = [
     "Scraper",
@@ -43,5 +45,8 @@ __all__ = [
     "StructuredLogger",
     "clean_html_for_llm",
     "FailureTracker",
+    "SemanticCache",
+    "StructuralDiff",
+    "SelfHealingParser",
     "__version__",
 ]

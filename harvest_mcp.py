@@ -379,7 +379,7 @@ def main():
     import sys
 
     if "--version" in sys.argv:
-        print("Harvest MCP Server 0.6.1")
+        print("Harvest MCP Server 0.6.2")
         return
 
     mcp = create_server()

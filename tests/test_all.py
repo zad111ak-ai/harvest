@@ -6,6 +6,7 @@ Run: python3 -m pytest tests/ -v
 """
 
 import json
+import asyncio
 import sys
 import tempfile
 from pathlib import Path
@@ -431,7 +432,7 @@ def test_pipeline_module_import():
 def test_init_imports():
     from harvest import __version__, __doc__
 
-    assert __version__ == "0.6.1"
+    assert __version__ == "0.6.2"
     assert len(__doc__) > 0
 
 
@@ -680,7 +681,7 @@ def test_mcp_status_tool():
     import json
 
     data = json.loads(result)
-    assert data["version"] == "0.6.1"
+    assert data["version"] == "0.6.2"
     assert "scrape" in data["tools"]
     assert data["proxy_configured"] in (True, False)  # depends on env
 
@@ -762,7 +763,7 @@ def test_mcp_main_version():
         text=True,
     )
     assert result.returncode == 0
-    assert "0.6.1" in result.stdout
+    assert "0.6.2" in result.stdout
 
 
 def test_mcp_entry_point():
@@ -932,3 +933,220 @@ def test_stealth_build_extra_args():
     assert "timezone_id" in args
     assert "viewport" in args
     assert "user_agent" in args
+
+
+# ── Semantic Cache tests ──
+
+
+def test_semantic_cache_exact_match():
+    """Semantic cache should find exact prompt match."""
+    from harvest.semantic_cache import SemanticCache
+
+    cache = SemanticCache()
+    cache.set("https://example.com", "Get all prices", "<html></html>", {"prices": [1, 2]})
+    result = cache.get("https://example.com", "Get all prices", "<html></html>")
+    assert result is not None
+    assert result["prices"] == [1, 2]
+
+
+def test_semantic_cache_semantic_match():
+    """Semantic cache should find semantically similar prompts."""
+    from harvest.semantic_cache import SemanticCache
+
+    cache = SemanticCache()
+    cache.set("https://example.com", "Extract all product prices", "<html></html>", {"prices": [10]})
+    # Similar but different wording
+    result = cache.get("https://example.com", "Get all product prices", "<html></html>")
+    assert result is not None
+
+
+def test_semantic_cache_different_url_no_match():
+    """Semantic cache should not match different URLs."""
+    from harvest.semantic_cache import SemanticCache
+
+    cache = SemanticCache()
+    cache.set("https://a.com", "Get prices", "<html></html>", {"prices": [1]})
+    result = cache.get("https://b.com", "Get prices", "<html></html>")
+    assert result is None
+
+
+def test_semantic_cache_html_invalidation():
+    """Semantic cache should invalidate when HTML changes."""
+    from harvest.semantic_cache import SemanticCache
+
+    cache = SemanticCache()
+    cache.set("https://example.com", "Get prices", "<html>v1</html>", {"prices": [1]})
+    # Same prompt but different HTML
+    result = cache.get("https://example.com", "Get prices", "<html>v2</html>")
+    assert result is None
+
+
+def test_semantic_cache_stats():
+    """Semantic cache should track hit/miss stats."""
+    from harvest.semantic_cache import SemanticCache
+
+    cache = SemanticCache()
+    cache.set("https://example.com", "prompt", "<html></html>", "data")
+    cache.get("https://example.com", "prompt", "<html></html>")  # hit
+    cache.get("https://example.com", "other", "<html></html>")  # miss
+    stats = cache.stats()
+    assert stats["hits"] == 1
+    assert stats["misses"] == 1
+    assert stats["total_entries"] == 1
+
+
+def test_semantic_cache_invalidate():
+    """Semantic cache invalidate should clear URL entries."""
+    from harvest.semantic_cache import SemanticCache
+
+    cache = SemanticCache()
+    cache.set("https://example.com", "p", "<html></html>", "d")
+    cache.invalidate("https://example.com")
+    result = cache.get("https://example.com", "p", "<html></html>")
+    assert result is None
+
+
+def test_semantic_cache_clear():
+    """Semantic cache clear should reset everything."""
+    from harvest.semantic_cache import SemanticCache
+
+    cache = SemanticCache()
+    cache.set("https://example.com", "p", "<html></html>", "d")
+    cache.clear()
+    stats = cache.stats()
+    assert stats["total_entries"] == 0
+    assert stats["hits"] == 0
+
+
+# ── Structural Diff tests ──
+
+
+def test_structural_diff_added_removed():
+    """Structural diff should detect added and removed elements."""
+    from harvest.structural_diff import StructuralDiff
+
+    old = '<html><body><div class="header">Old</div><div class="content">Text</div></body></html>'
+    new = '<html><body><div class="header">Old</div><div class="content">Text</div><div class="footer">New</div></body></html>'
+    differ = StructuralDiff()
+    result = differ.diff(old_html=old, new_html=new)
+    assert len(result["added"]) > 0
+    assert result["summary"] != ""
+
+
+def test_structural_diff_changed_text():
+    """Structural diff should detect text content changes."""
+    from harvest.structural_diff import StructuralDiff
+
+    old = "<html><body><h1>Old Title</h1><p>Original text</p></body></html>"
+    new = "<html><body><h1>New Title</h1><p>Changed text</p></body></html>"
+    differ = StructuralDiff()
+    result = differ.diff(old_html=old, new_html=new)
+    assert len(result["changed"]) > 0
+
+
+def test_structural_diff_no_change():
+    """Structural diff should report no changes for identical HTML."""
+    from harvest.structural_diff import StructuralDiff
+
+    html = "<html><body><h1>Title</h1><p>Content</p></body></html>"
+    differ = StructuralDiff()
+    result = differ.diff(old_html=html, new_html=html)
+    assert len(result["added"]) == 0
+    assert len(result["removed"]) == 0
+    assert len(result["changed"]) == 0
+
+
+def test_structural_diff_capture_and_load():
+    """Structural diff should save and load snapshots."""
+    from harvest.structural_diff import StructuralDiff
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        differ = StructuralDiff(data_dir=tmp)
+        html = '<html><body><div class="box">Hello</div></body></html>'
+        differ.capture(html, url="https://test.com")
+        loaded = differ.load_snapshot("https://test.com")
+        assert loaded is not None
+        assert len(loaded) > 0
+
+
+def test_structural_diff_extract_structure():
+    """extract_structure should parse HTML into element signatures."""
+    from harvest.structural_diff import _extract_structure
+
+    html = '<html><body><h1 id="title">Hello</h1><div class="card">Content</div></body></html>'
+    structure = _extract_structure(html)
+    assert len(structure) >= 2
+    tags = [e["tag"] for e in structure]
+    assert "h1" in tags
+    assert "div" in tags
+
+
+# ── Self-Healing tests ──
+
+
+def test_self_healing_test_selectors():
+    """test_selectors should correctly identify working/broken selectors."""
+    from harvest.self_healing import _test_selectors
+
+    html = '<html><body><div class="price">$10</div><span class="title">Product</span></body></html>'
+    result = _test_selectors(html, {"price": ".price", "title": ".title", "missing": ".nope"})
+    assert result["price"] is True
+    assert result["title"] is True
+    assert result["missing"] is False
+
+
+def test_self_healing_extract_with_selectors():
+    """extract_with_selectors should pull data from HTML."""
+    from harvest.self_healing import _extract_with_selectors
+
+    html = '<html><body><div class="price">$25</div><h1 class="name">Widget</h1></body></html>'
+    result = _extract_with_selectors(html, {"price": ".price", "name": ".name"})
+    assert result["price"] == "$25"
+    assert result["name"] == "Widget"
+
+
+def test_self_healing_extract_missing():
+    """extract_with_selectors should return None for missing elements."""
+    from harvest.self_healing import _extract_with_selectors
+
+    html = "<html><body><p>Hello</p></body></html>"
+    result = _extract_with_selectors(html, {"missing": ".nope"})
+    assert result["missing"] is None
+
+
+def test_self_healing_detect_broken():
+    """SelfHealingParser should detect broken selectors."""
+    from harvest.self_healing import SelfHealingParser
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        parser = SelfHealingParser(url="https://test.com", data_dir=tmp)
+        html = '<html><body><div class="new-price">$99</div></body></html>'
+        result = asyncio.run(
+            parser.extract(
+                html=html,
+                schema={"price": ".old-price"},
+            )
+        )
+        assert result["healed"] is False  # LLM unavailable in test
+        assert "broken" in result or "still_broken" in result
+
+
+def test_self_healing_working_selectors():
+    """SelfHealingParser should pass through working selectors."""
+    from harvest.self_healing import SelfHealingParser
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        parser = SelfHealingParser(url="https://test.com", data_dir=tmp)
+        html = '<html><body><div class="price">$50</div></body></html>'
+        result = asyncio.run(
+            parser.extract(
+                html=html,
+                schema={"price": ".price"},
+            )
+        )
+        assert result["healed"] is False
+        assert result["data"]["price"] == "$50"
+        assert "working" in result["details"]
