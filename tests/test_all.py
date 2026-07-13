@@ -431,7 +431,7 @@ def test_pipeline_module_import():
 def test_init_imports():
     from harvest import __version__, __doc__
 
-    assert __version__ == "0.4.0"
+    assert __version__ == "0.5.0"
     assert len(__doc__) > 0
 
 
@@ -678,7 +678,7 @@ def test_mcp_status_tool():
     import json
 
     data = json.loads(result)
-    assert data["version"] == "0.4.0"
+    assert data["version"] == "0.5.0"
     assert "scrape" in data["tools"]
     assert data["proxy_configured"] in (True, False)  # depends on env
 
@@ -760,7 +760,7 @@ def test_mcp_main_version():
         text=True,
     )
     assert result.returncode == 0
-    assert "0.4.0" in result.stdout
+    assert "0.5.0" in result.stdout
 
 
 def test_mcp_entry_point():
@@ -776,3 +776,157 @@ def test_mcp_entry_point():
     )
     # FastMCP stdio doesn't have --help, but should not crash
     assert result.returncode in (0, 1)
+
+
+# ── Cache tests ──
+
+
+def test_cache_init():
+    """Cache should start empty."""
+    from harvest.cache import ResponseCache
+
+    c = ResponseCache(ttl_seconds=60)
+    assert c.size == 0
+
+
+def test_cache_set_get():
+    """Setting and getting a value should work."""
+    from harvest.cache import ResponseCache
+
+    c = ResponseCache(ttl_seconds=60)
+    key = "https://example.com"
+    val = {"content": "hello", "title": "Example"}
+    c.set(key, val)
+    assert c.get(key) == val
+
+
+def test_cache_get_miss():
+    """Getting a non-existent key should return None."""
+    from harvest.cache import ResponseCache
+
+    c = ResponseCache(ttl_seconds=60)
+    assert c.get("https://not-cached.com") is None
+
+
+def test_cache_ttl_expiry():
+    """Expired entries should return None."""
+    from harvest.cache import ResponseCache
+    import time
+
+    c = ResponseCache(ttl_seconds=1)
+    c.set("k", "v")
+    time.sleep(1.5)
+    assert c.get("k") is None
+
+
+def test_cache_overwrite():
+    """Setting the same key should overwrite."""
+    from harvest.cache import ResponseCache
+
+    c = ResponseCache(ttl_seconds=60)
+    c.set("k", "v1")
+    c.set("k", "v2")
+    assert c.get("k") == "v2"
+
+
+# ── RateLimiter tests ──
+
+
+def test_rate_limiter_init():
+    """RateLimiter should initialize with correct defaults."""
+    from harvest.rate_limiter import RateLimiter
+
+    r = RateLimiter(max_per_minute=10)
+    assert r.max_per_minute == 10
+
+
+def test_rate_limiter_acquire():
+    """Acquire should succeed when under limit."""
+    import asyncio
+    from harvest.rate_limiter import RateLimiter
+
+    async def t():
+        r = RateLimiter(max_per_minute=100)
+        await r.acquire()
+        return True
+
+    assert asyncio.run(t())
+
+
+def test_rate_limiter_context_manager():
+    """RateLimiter should work as async context manager."""
+    import asyncio
+    from harvest.rate_limiter import RateLimiter
+
+    async def t():
+        r = RateLimiter(max_per_minute=100)
+        async with r:
+            return True
+
+    assert asyncio.run(t())
+
+
+# ── Stealth tests ──
+
+
+def test_stealth_init():
+    """Stealth should initialize with defaults."""
+    from harvest.stealth import Stealth
+    from harvest.stealth import USER_AGENTS
+
+    s = Stealth()
+    assert s._user_agent is not None
+    assert len(USER_AGENTS) >= 20
+
+
+def test_stealth_random_ua():
+    """get_random_ua should return a string."""
+    from harvest.stealth import Stealth
+
+    s = Stealth()
+    ua = s._user_agent
+    assert isinstance(ua, str)
+    assert len(ua) > 20
+
+
+def test_stealth_random_viewport():
+    """get_viewport should return width/height dict."""
+    from harvest.stealth import Stealth
+
+    s = Stealth()
+    vp = s._viewport
+    assert "width" in vp
+    assert "height" in vp
+    assert 800 <= vp["width"] <= 1920
+    assert 600 <= vp["height"] <= 1080
+
+
+def test_stealth_random_platform():
+    """get_platform should return a string."""
+    from harvest.stealth import Stealth
+
+    s = Stealth()
+    platform = s._platform
+    assert platform in ("Windows", "MacIntel", "Linux x86_64")
+
+
+def test_stealth_random_timezone():
+    """get_timezone should return a valid IANA timezone."""
+    from harvest.stealth import Stealth
+
+    s = Stealth()
+    tz = s._timezone
+    assert "/" in tz
+
+
+def test_stealth_build_extra_args():
+    """build_extra_args should return a dict with all stealth params."""
+    from harvest.stealth import Stealth
+
+    s = Stealth()
+    args = s.get_args()
+    assert isinstance(args, dict)
+    assert "locale" in args
+    assert "timezone_id" in args
+    assert "viewport" in args
+    assert "user_agent" in args

@@ -5,7 +5,7 @@ One browser, many pages. Proxy support. Human-like behavior.
 """
 
 import asyncio
-from typing import Optional, Callable, Any
+from typing import Optional, Callable, Any, Dict
 
 try:
     from scrapling.fetchers import AsyncStealthySession
@@ -36,18 +36,27 @@ class BrowserSession:
         load_dom: bool = True,
         network_idle: bool = False,
         max_pages: int = 3,
+        additional_args: Optional[Dict[str, Any]] = None,
     ):
         if AsyncStealthySession is None:
             raise ImportError("scrapling is not installed. Install it with: pip install scrapling")
-        self._session = AsyncStealthySession(
-            max_pages=max_pages,
-            headless=headless,
-            proxy=proxy,
-            timeout=timeout,
-            solve_cloudflare=solve_cloudflare,
-            load_dom=load_dom,
-            network_idle=network_idle,
-        )
+
+        # Filter out invalid args for AsyncStealthySession
+        valid_args = {
+            "max_pages": max_pages,
+            "headless": headless,
+            "proxy": proxy,
+            "timeout": timeout,
+            "solve_cloudflare": solve_cloudflare,
+            "load_dom": load_dom,
+            "network_idle": network_idle,
+        }
+
+        # Merge additional_args if provided
+        if additional_args:
+            valid_args.update(additional_args)
+
+        self._session = AsyncStealthySession(**valid_args)
         self._started = False
 
     @classmethod
@@ -90,6 +99,10 @@ class BrowserSession:
 
     async def __aexit__(self, *args):
         await self.close()
+
+    def get_playwright_page(self):
+        """Get the underlying Playwright Page object for custom actions."""
+        return self._session._browser_context.pages[0]
 
 
 # ============ HTML HELPERS ============

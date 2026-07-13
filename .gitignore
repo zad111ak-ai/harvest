@@ -1,11 +1,54 @@
+# Harvest — Web scraping toolkit (free & universal)
+
+# Python
 __pycache__/
 *.pyc
-.DS_Store
+*.pyo
 *.egg-info/
 dist/
 build/
-~/.harvest/
-trends.txt
-trends_urls.txt
-extract_links.py
-config.yaml
+*.egg
+.eggs/
+*.whl
+
+# Environment
+.env
+.env.*
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Data (user-specific)
+data/
+snapshots/
+
+# Proxy lists (user-provided)
+proxies.txt
+proxy_list.txt
+proxylist.txt
+
+# Config (user-specific)
+.harvest/config.yaml
+.harvest/config*.yaml
+!.harvest/config.example.yaml
+
+# Generated
+*.gif
+*.png
+*.jpg
+__snapshots__/
+
+# OS
+Thumbs.db

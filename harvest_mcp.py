@@ -229,7 +229,7 @@ def create_server():
         """
         return json.dumps(
             {
-                "version": "0.4.0",
+                "version": "0.5.0",
                 "proxy_configured": bool(default_proxy),
                 "headless": default_headless,
                 "config_file": str(Path.home() / ".harvest" / "config.yaml"),
@@ -261,7 +261,7 @@ def main():
     import sys
 
     if "--version" in sys.argv:
-        print("Harvest MCP Server 0.4.0")
+        print("Harvest MCP Server 0.5.0")
         return
 
     mcp = create_server()

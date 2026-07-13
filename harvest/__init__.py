@@ -6,10 +6,12 @@ Built on Scrapling for Cloudflare bypass and anti-bot evasion.
 Features that cost $50-200/mo elsewhere — free here.
 """
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 from .core import Scraper as Scraper
-from .extract import SchemaExtractor as SchemaExtractor, load_schema as load_schema
+from .extract import SchemaExtractor as SchemaExtractor
+from .extract import LLMExtractor as LLMExtractor
+from .extract import load_schema as load_schema
 from .batch import BatchProcessor as BatchProcessor, BatchResult as BatchResult
 from .driftz import DriftzMail as DriftzMail
 from .contacts import ContactCollector as ContactCollector

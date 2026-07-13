@@ -21,6 +21,7 @@ from .extract import SchemaExtractor
 from .crawl import SiteCrawler
 from .contacts import ContactCollector
 from .config import Config
+from .mcp_tools import add_mcp_tools
 
 
 def create_app(config: Optional[Config] = None):
@@ -46,6 +47,9 @@ def create_app(config: Optional[Config] = None):
         docs_url="/docs",
         redoc_url="/redoc",
     )
+
+    # Add MCP tools
+    add_mcp_tools(app)
 
     # ── Request models ──
 

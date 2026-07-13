@@ -1,0 +1,31 @@
+# Harvest Config Example
+# Copy to ~/.harvest/config.yaml and customize
+
+proxy:
+  # Proxy settings (leave blank to use direct connection / Scrapling built-in)
+  url: ""                    # http://user:pass@host:port or socks5://host:port
+  rotation_file: ""          # Path to file with proxy list (one per line)
+  rotation_interval: 10      # Requests before rotating to next proxy
+  use_scrapling: true        # Use Scrapling's built-in proxy handling
+
+scraper:
+  rate_limit: "5/1s"         # Max requests per second
+  concurrency: 3             # Parallel requests
+  delay: 1.0                 # Delay between requests (seconds)
+  timeout: 30                # Request timeout (seconds)
+  retries: 3                 # Retry attempts on failure
+  # User-Agent is auto-rotated, no need to set manually
+
+export:
+  default_format: json       # Output format: json, csv
+  csv_delimiter: ","
+
+notify:
+  telegram_token: ""         # Bot token for Telegram notifications
+  telegram_chat_id: ""       # Chat ID for notifications
+  webhook_url: ""            # Custom webhook URL
+
+paths:
+  data_dir: "~/.harvest/data"
+  snapshots_dir: "~/.harvest/snapshots"
+  logs_dir: "~/.harvest/logs"

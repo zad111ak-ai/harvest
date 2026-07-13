@@ -1,23 +1,83 @@
-"""
-Core — Page scraping and content extraction.
-"""
+"""Core — Page scraping and content extraction."""
 
+import asyncio
 import re
 from typing import Any, Optional
 from datetime import datetime
 
 from .browser import BrowserSession
+from .proxy_rotator import ProxyRotator
+from .captcha_solver import CaptchaSolver
+from .stealth import Stealth
+from .rate_limiter import RateLimiter
+from .cache import ResponseCache
+
+# Optional AdaptiveCore integration
+try:
+    from adaptive.capture import record as capture_record
+
+    HAVE_ADAPTIVE = True
+except ImportError:
+    HAVE_ADAPTIVE = False
 
 
 class Scraper:
     """Extract structured content from any web page.
 
-    Handles Cloudflare, JS rendering, anti-bot protections.
+    Handles Cloudflare, Turnstile/hCaptcha, JS rendering, anti-bot protections.
+    Reuses one browser session for all requests.
     """
 
-    def __init__(self, proxy: Optional[str] = None, headless: bool = True):
+    def __init__(
+        self,
+        proxy: Optional[str] = None,
+        headless: bool = True,
+        use_rotator: bool = True,
+        use_stealth: bool = True,
+        use_captcha_solver: bool = True,
+        rate_limit: int = 10,  # max requests per minute
+        cache_ttl: int = 300,  # seconds
+    ):
         self.proxy = proxy
         self.headless = headless
+        self.use_rotator = use_rotator
+        self.use_stealth = use_stealth
+        self.use_captcha_solver = use_captcha_solver
+        self._session: Optional[BrowserSession] = None
+        self.rate_limiter = RateLimiter(max_per_minute=rate_limit)
+        self.cache = ResponseCache(ttl_seconds=cache_ttl)
+
+        if use_rotator:
+            self.proxy_rotator = ProxyRotator()
+        if use_captcha_solver:
+            self.captcha_solver = CaptchaSolver()
+        if use_stealth:
+            self.stealth = Stealth()
+
+    async def _get_session(self) -> BrowserSession:
+        """Get or create persistent browser session."""
+        if self._session is None:
+            proxy = self.proxy
+            if self.use_rotator:
+                proxy = await self.proxy_rotator.get() or proxy
+
+            additional_args = {}
+            if self.use_stealth:
+                additional_args.update(self.stealth.get_args())
+
+            self._session = await BrowserSession.create(
+                proxy=proxy,
+                headless=self.headless,
+                solve_cloudflare=True,
+                additional_args=additional_args,
+            )
+        return self._session
+
+    async def close(self):
+        """Close the persistent browser session."""
+        if self._session:
+            await self._session.close()
+            self._session = None
 
     async def scrape(
         self,
@@ -35,46 +95,83 @@ class Scraper:
         Returns:
             dict with url, title, content, metadata
         """
-        async with BrowserSession(proxy=self.proxy, headless=self.headless) as session:
+        try:
+            # Check cache first
+            cached = self.cache.get(url)
+            if cached:
+                return cached
+
+            # Rate limit
+            await self.rate_limiter.acquire()
+
+            session = await self._get_session()
+
+            # Solve captcha if detected (only on first scrape per session)
+            if self.use_captcha_solver and hasattr(self, "captcha_solver"):
+                try:
+                    page = session.get_playwright_page()
+                    await self.captcha_solver.solve(page, "#cf-turnstile, #hcaptcha-box")
+                except Exception:
+                    pass
+
             resp = await session.fetch(
                 url,
                 extraction_type=extraction,
                 main_content_only=(selector is None),
+                css_selector=selector,
             )
 
-        content = ""
-        title = ""
-        # Scrapling Response object
-        if hasattr(resp, "body"):
-            body = resp.body
-            if isinstance(body, bytes):
-                content = body.decode("utf-8", errors="replace")
-            elif isinstance(body, str):
-                content = body
-            # Try prettify HTML
-            try:
-                pretty = resp.prettify()
-                if pretty and len(pretty) > len(content):
-                    content = pretty
-            except Exception:
-                pass
-        elif isinstance(resp, dict):
-            content = resp.get("content", "") or ""
-            content = "\n".join(content) if isinstance(content, list) else str(content)
-        elif isinstance(resp, str):
-            content = resp
+            content = ""
+            title = ""
+            # Scrapling Response object
+            if hasattr(resp, "body"):
+                body = resp.body
+                if isinstance(body, bytes):
+                    content = body.decode("utf-8", errors="replace")
+                elif isinstance(body, str):
+                    content = body
+                # Try prettify HTML
+                try:
+                    pretty = resp.prettify()
+                    if pretty and len(pretty) > len(content):
+                        content = pretty
+                except Exception:
+                    pass
+            elif isinstance(resp, dict):
+                content = resp.get("content", "") or ""
+                content = "\n".join(content) if isinstance(content, list) else str(content)
+            elif isinstance(resp, str):
+                content = resp
 
-        # Extract title
-        title_match = re.search(r"<title[^>]*>(.*?)</title>", content, re.DOTALL)
-        if title_match:
-            title = title_match.group(1).strip()
+            # Extract title
+            title_match = re.search(r"<title[^>]*>(.*?)</title>", content, re.DOTALL)
+            if title_match:
+                title = title_match.group(1).strip()
 
-        return {
-            "url": url,
-            "title": title or url,
-            "content": content,
-            "timestamp": datetime.utcnow().isoformat(),
-        }
+            # Record success in adaptive loop
+            if HAVE_ADAPTIVE and content:
+                try:
+                    capture_record("scrape", f"OK {url[:60]}", True, tool="harvest")
+                except Exception:
+                    pass
+
+            result = {
+                "url": url,
+                "title": title or url,
+                "content": content,
+                "timestamp": datetime.utcnow().isoformat(),
+                "proxy": self.proxy,
+            }
+            self.cache.set(url, result)
+            return result
+        except Exception as e:
+            # Log to adaptive loop
+            if HAVE_ADAPTIVE:
+                try:
+                    capture_record("scrape", f"FAIL {url[:50]}: {str(e)[:80]}", False, tool="harvest")
+                except Exception:
+                    pass
+            raise
 
     async def scrape_many(
         self,
@@ -83,7 +180,6 @@ class Scraper:
         extraction: str = "markdown",
     ) -> list[dict]:
         """Scrape multiple URLs concurrently."""
-        import asyncio
 
         tasks = [self.scrape(url, selector, extraction) for url in urls]
         results = await asyncio.gather(*tasks, return_exceptions=True)
