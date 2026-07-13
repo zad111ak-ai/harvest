@@ -1,6 +1,6 @@
 # Harvest
 
-Universal web collection engine — extract, monitor, crawl, and search any website through Cloudflare and anti-bot protections. **Free, open-source, runs on your machine.**
+Universal web collection engine — extract, monitor, crawl, and search any website through Cloudflare and anti-bot protections. **Free, open-source, runs on your machine.** v0.5.5
 
 ![Logo](./logo.svg)
 
@@ -93,6 +93,12 @@ harvest contacts https://company.com
 
 # Batch from file
 harvest batch urls.txt --concurrency 10
+
+# Discover all URLs on a site
+harvest map https://docs.example.com
+
+# Check installation health
+harvest doctor
 ```
 
 ---
@@ -144,11 +150,13 @@ llm:
 | `harvest llm-extract <url> --prompt TEXT` | **Structured data by AI description** |
 | `harvest monitor <url>` | Track page changes with diffs |
 | `harvest crawl <url> --max-pages N` | Crawl entire site |
+| `harvest map <url>` | **Discover all URLs on a site (sitemap + links)** |
 | `harvest contacts <url>` | Emails, social links, phones |
 | `harvest batch <file> --concurrency N` | Process many URLs |
 | `harvest pipeline "scrape URL | extract SCHEMA"` | Chain operations |
 | `harvest screenshot <url>` | Full-page screenshot |
 | `harvest search <query>` | Web search |
+| `harvest doctor` | **Check installation health** |
 | `harvest-mcp` | MCP server for AI agents |
 
 ---
@@ -270,6 +278,14 @@ pip install -e .
 ```
 
 ---
+
+## v0.5.5 Changelog
+
+- ✨ **`harvest llm-extract`** — AI-powered extraction via CLI (was advertised but missing!)
+- ✨ **`harvest map`** — Instant URL discovery (sitemap, robots.txt, homepage links)
+- ✨ **`harvest doctor`** — Installation health check
+- ✨ **MCP: `llm_extract` tool** — AI extraction via Model Context Protocol
+- ✨ **MCP: `map_urls` tool** — URL discovery via MCP
 
 ## v0.5.0 Changelog
 

@@ -28,7 +28,7 @@ from . import __version__
 from .core import Scraper
 from .monitor import ChangeWatcher
 from .contacts import ContactCollector
-from .extract import SchemaExtractor, load_schema
+from .extract import SchemaExtractor, LLMExtractor, load_schema
 from .crawl import SiteCrawler
 from .export import Exporter
 from .notify import Notifier
@@ -120,6 +120,34 @@ def build_parser() -> argparse.ArgumentParser:
     p_search = sub.add_parser("search", help="Search across supported sources")
     p_search.add_argument("query", help="Search query")
     p_search.add_argument("--source", default="all", help="Source to search (reddit, hn, all)")
+
+    # ── llm-extract ──
+    p_llm = sub.add_parser(
+        "llm-extract",
+        help="Extract structured data using natural language (AI-powered, no CSS needed)",
+    )
+    p_llm.add_argument("url", help="Page URL")
+    p_llm.add_argument("--prompt", "-p", required=True, help="What to extract in plain language")
+    p_llm.add_argument("--schema", "-s", help="Optional JSON schema for structured output")
+    p_llm.add_argument("--model", "-m", help="LLM model (default from config)")
+    p_llm.add_argument("--base-url", help="LLM API base URL (default from config)")
+    p_llm.add_argument("--api-key", help="LLM API key (default from config)")
+    p_llm.add_argument("--output", "-o", choices=["json", "md", "txt"], default="json", help="Output format")
+
+    # ── map ──
+    p_map = sub.add_parser(
+        "map",
+        help="Discover all URLs on a website instantly (like Firecrawl Map)",
+    )
+    p_map.add_argument("url", help="Website URL")
+    p_map.add_argument("--max-urls", type=int, default=500, help="Max URLs to return")
+    p_map.add_argument("--output", "-o", choices=["json", "txt"], default="json", help="Output format")
+
+    # ── doctor ──
+    sub.add_parser(
+        "doctor",
+        help="Check Harvest installation health",
+    )
 
     # ── screenshot ──
     p_ss = sub.add_parser("screenshot", help="Capture page screenshot")
@@ -318,6 +346,185 @@ async def cmd_search(args):
     )
 
 
+async def cmd_map(args):
+    """Discover all URLs on a website instantly (sitemap + links)."""
+    from urllib.parse import urljoin, urlparse
+    import re
+
+    parsed = urlparse(args.url)
+    domain = parsed.netloc
+
+    urls = set()
+
+    # 1. Try sitemap.xml
+    sitemap_urls = [
+        urljoin(args.url, "/sitemap.xml"),
+        urljoin(args.url, "/sitemap_index.xml"),
+        urljoin(args.url, "/sitemap.txt"),
+    ]
+    scraper = Scraper(proxy=args.proxy, headless=not args.no_headless)
+
+    for surl in sitemap_urls:
+        try:
+            result = await scraper.scrape(surl, extraction="text")
+            content = result.get("content", "")
+            # Extract URLs from sitemap XML or text
+            found = re.findall(r"https?://[^\s<>\"']+", content)
+            for u in found:
+                if domain in u:
+                    urls.add(u.split("#")[0].split("?")[0])
+        except Exception:
+            continue
+
+    # 2. Try robots.txt for Sitemap: directives
+    try:
+        robots = await scraper.scrape(f"{parsed.scheme}://{domain}/robots.txt", extraction="text")
+        for line in robots.get("content", "").split("\n"):
+            if line.lower().startswith("sitemap:"):
+                sm_url = line.split(":", 1)[1].strip()
+                try:
+                    sm = await scraper.scrape(sm_url, extraction="text")
+                    found = re.findall(r"https?://[^\s<>\"']+", sm.get("content", ""))
+                    for u in found:
+                        if domain in u:
+                            urls.add(u.split("#")[0].split("?")[0])
+                except Exception:
+                    continue
+    except Exception:
+        pass
+
+    # 3. Scrape homepage for links
+    try:
+        home = await scraper.scrape(args.url, extraction="html")
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(home.get("content", ""), "html.parser")
+        for a in soup.find_all("a", href=True):
+            href = urljoin(args.url, str(a["href"])).split("#")[0].split("?")[0]
+            if domain in href:
+                urls.add(href)
+    except Exception:
+        pass
+
+    url_list = sorted(urls)[: args.max_urls]
+
+    if args.output == "txt":
+        for u in url_list:
+            print(u)
+    else:
+        print(
+            json.dumps(
+                {
+                    "domain": domain,
+                    "total": len(url_list),
+                    "urls": url_list,
+                },
+                indent=2,
+                ensure_ascii=False,
+            )
+        )
+
+    print(f"\n✓ Found {len(url_list)} URLs", file=__import__("sys").stderr)
+
+
+async def cmd_doctor(args):
+    """Check Harvest installation health."""
+    import sys
+    import importlib
+
+    checks = []
+
+    # Python version
+    py_ver = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    checks.append(("Python", py_ver, sys.version_info >= (3, 10)))
+
+    # Core deps
+    for mod_name, pkg_name in [
+        ("scrapling", "scrapling"),
+        ("aiohttp", "aiohttp"),
+        ("bs4", "beautifulsoup4"),
+        ("fastapi", "fastapi"),
+        ("pydantic", "pydantic"),
+    ]:
+        try:
+            mod = importlib.import_module(mod_name)
+            ver = getattr(mod, "__version__", "?")
+            checks.append((pkg_name, ver, True))
+        except ImportError:
+            checks.append((pkg_name, "NOT INSTALLED", False))
+
+    # Optional deps
+    for mod_name, pkg_name in [
+        ("mcp", "mcp"),
+        ("yaml", "pyyaml"),
+    ]:
+        try:
+            mod = importlib.import_module(mod_name)
+            ver = getattr(mod, "__version__", "?")
+            checks.append((pkg_name, ver, True))
+        except ImportError:
+            checks.append((pkg_name, "NOT INSTALLED", False))
+
+    # Config
+    from pathlib import Path
+
+    config_path = Path.home() / ".harvest" / "config.yaml"
+    checks.append(("config.yaml", str(config_path), config_path.exists()))
+
+    # Print results
+    all_ok = True
+    for name, ver, ok in checks:
+        status = "✅" if ok else "❌"
+        if not ok:
+            all_ok = False
+        print(f"  {status} {name}: {ver}")
+
+    print()
+    if all_ok:
+        print("✅ All checks passed. Harvest is ready!")
+    else:
+        print("❌ Some checks failed. Fix the issues above.")
+
+
+async def cmd_llm_extract(args):
+    """Extract structured data using natural language + LLM."""
+    cfg = Config()
+    base_url = args.base_url or cfg.get("llm", "base_url", default="http://localhost:3000/v1")
+    model = args.model or cfg.get("llm", "model", default="auto/best-chat")
+    api_key = args.api_key or cfg.get("llm", "api_key", default="sk-omniroute")
+
+    schema = None
+    if args.schema:
+        schema = load_schema(args.schema)
+
+    llm = LLMExtractor(base_url=base_url, model=model, api_key=api_key)
+    result = await llm.extract(
+        url=args.url,
+        description=args.prompt,
+        schema=schema,
+    )
+
+    if args.output == "json":
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+    elif args.output == "md":
+        extracted = result.get("extracted", {})
+        print(f"# {result.get('title', '')}\n")
+        if isinstance(extracted, dict):
+            for k, v in extracted.items():
+                print(f"**{k}:** {v}")
+        else:
+            print(extracted)
+    elif args.output == "txt":
+        extracted = result.get("extracted", {})
+        if isinstance(extracted, dict):
+            for k, v in extracted.items():
+                print(f"{k}: {v}")
+        else:
+            print(extracted)
+
+    await llm.close()
+
+
 async def cmd_screenshot(args):
     """Take a screenshot of a page using Scrapling's browser session."""
     from .browser import BrowserSession
@@ -421,7 +628,7 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    cmd_map = {
+    dispatch = {
         "scrape": cmd_scrape,
         "extract": cmd_extract,
         "monitor": cmd_monitor,
@@ -430,13 +637,16 @@ def main():
         "contacts": cmd_contacts,
         "crawl": cmd_crawl,
         "search": cmd_search,
+        "llm-extract": cmd_llm_extract,
+        "map": cmd_map,
+        "doctor": cmd_doctor,
         "screenshot": cmd_screenshot,
         "batch": cmd_batch,
         "serve": cmd_serve,
         "config": cmd_config,
     }
 
-    cmd_fn = cmd_map.get(args.command)
+    cmd_fn = dispatch.get(args.command)
     if cmd_fn:
         asyncio.run(cmd_fn(args))
     else:

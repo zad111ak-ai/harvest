@@ -219,6 +219,122 @@ def create_server():
         result = await cw.check(url, selector=selector)
         return json.dumps(result, ensure_ascii=False, indent=2)
 
+    # ---- Tool: llm_extract ----
+    @mcp.tool()
+    async def llm_extract(
+        url: str,
+        prompt: str,
+        schema: Optional[str] = None,
+        model: Optional[str] = None,
+    ) -> str:
+        """Extract structured data from a web page using natural language.
+
+        No CSS selectors needed — just describe what you want in plain language.
+        Uses a local LLM (OmniRoute, Ollama, or any OpenAI-compatible API).
+
+        Args:
+            url: The page URL to extract data from.
+            prompt: What to extract in plain language (e.g. "get all product names and prices").
+            schema: Optional JSON schema to enforce structured output.
+            model: Optional LLM model override.
+
+        Returns:
+            Extracted data as JSON string.
+        """
+        from harvest.extract import LLMExtractor
+
+        llm_cfg = cfg.get("llm", {})
+        extractor = LLMExtractor(
+            base_url=llm_cfg.get("base_url", "http://localhost:3000/v1"),
+            model=model or llm_cfg.get("model", "auto/best-chat"),
+            api_key=llm_cfg.get("api_key", "sk-omniroute"),
+            proxy=default_proxy,
+            headless=default_headless,
+        )
+
+        schema_dict = None
+        if schema:
+            try:
+                schema_dict = json.loads(schema)
+            except json.JSONDecodeError as e:
+                return json.dumps({"error": f"Invalid schema JSON: {e}"})
+
+        result = await extractor.extract(
+            url=url,
+            description=prompt,
+            schema=schema_dict,
+        )
+        await extractor.close()
+        return json.dumps(result, ensure_ascii=False, indent=2)[:500_000]
+
+    # ---- Tool: map ----
+    @mcp.tool()
+    async def map_urls(
+        url: str,
+        max_urls: int = 500,
+    ) -> str:
+        """Discover all URLs on a website instantly.
+
+        Uses sitemap.xml, robots.txt, and homepage links.
+        Like Firecrawl Map — fast URL discovery without scraping content.
+
+        Args:
+            url: Website URL to discover.
+            max_urls: Max URLs to return (default 500).
+
+        Returns:
+            JSON with discovered URLs.
+        """
+        import re
+        from urllib.parse import urljoin, urlparse
+        from bs4 import BeautifulSoup
+
+        parsed = urlparse(url)
+        domain = parsed.netloc
+        urls = set()
+
+        from harvest.core import Scraper
+
+        scraper = Scraper(proxy=default_proxy, headless=default_headless)
+
+        # 1. Sitemap.xml
+        for surl in [urljoin(url, "/sitemap.xml"), urljoin(url, "/sitemap_index.xml")]:
+            try:
+                result = await scraper.scrape(surl, extraction="text")
+                found = re.findall(r"https?://[^\s<>\"']+", result.get("content", ""))
+                for u in found:
+                    if domain in u:
+                        urls.add(u.split("#")[0].split("?")[0])
+            except Exception:
+                continue
+
+        # 2. robots.txt Sitemap directives
+        try:
+            robots = await scraper.scrape(f"{parsed.scheme}://{domain}/robots.txt", extraction="text")
+            for line in robots.get("content", "").split("\n"):
+                if line.lower().startswith("sitemap:"):
+                    sm_url = line.split(":", 1)[1].strip()
+                    sm = await scraper.scrape(sm_url, extraction="text")
+                    for u in re.findall(r"https?://[^\s<>\"']+", sm.get("content", "")):
+                        if domain in u:
+                            urls.add(u.split("#")[0].split("?")[0])
+        except Exception:
+            pass
+
+        # 3. Homepage links
+        try:
+            home = await scraper.scrape(url, extraction="html")
+            soup = BeautifulSoup(home.get("content", ""), "html.parser")
+            for a in soup.find_all("a", href=True):
+                href = urljoin(url, str(a["href"])).split("#")[0].split("?")[0]
+                if domain in href:
+                    urls.add(href)
+        except Exception:
+            pass
+
+        url_list = sorted(urls)[:max_urls]
+        return json.dumps({"domain": domain, "total": len(url_list), "urls": url_list}, ensure_ascii=False, indent=2)
+
     # ---- Tool: status ----
     @mcp.tool()
     def status() -> str:
@@ -229,13 +345,15 @@ def create_server():
         """
         return json.dumps(
             {
-                "version": "0.5.0",
+                "version": "0.5.5",
                 "proxy_configured": bool(default_proxy),
                 "headless": default_headless,
                 "config_file": str(Path.home() / ".harvest" / "config.yaml"),
                 "tools": [
                     "scrape",
                     "extract",
+                    "llm_extract",
+                    "map_urls",
                     "batch",
                     "contacts",
                     "crawl",
@@ -261,7 +379,7 @@ def main():
     import sys
 
     if "--version" in sys.argv:
-        print("Harvest MCP Server 0.5.0")
+        print("Harvest MCP Server 0.5.5")
         return
 
     mcp = create_server()

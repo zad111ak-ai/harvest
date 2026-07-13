@@ -6,7 +6,7 @@ Built on Scrapling for Cloudflare bypass and anti-bot evasion.
 Features that cost $50-200/mo elsewhere — free here.
 """
 
-__version__ = "0.5.0"
+__version__ = "0.5.5"
 
 from .core import Scraper as Scraper
 from .extract import SchemaExtractor as SchemaExtractor
