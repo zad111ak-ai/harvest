@@ -16,7 +16,7 @@ import hashlib
 import re
 import time
 from collections.abc import Sequence
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 
 def _tokenize(text: str) -> list[str]:
@@ -50,6 +50,10 @@ class SemanticCache:
     will share the same cache entry (if similarity > threshold).
 
     Entries are invalidated when the HTML content changes.
+
+    Supports optional health-check callback: when the check fails
+    (e.g. Redis connection lost) the cache auto-clears so stale
+    data is never served across an outage.
     """
 
     def __init__(
@@ -57,10 +61,13 @@ class SemanticCache:
         ttl_seconds: int = 3600,
         max_size: int = 500,
         similarity_threshold: float = 0.75,
+        health_check_fn: Optional[Callable[[], bool]] = None,
     ):
         self._ttl = ttl_seconds
         self._max_size = max_size
         self._threshold = similarity_threshold
+        self._health_check = health_check_fn
+        self._was_healthy = True
         # Each entry: {url: [{tokens, html_hash, response, timestamp}, ...]}
         self._data: dict[str, list[dict[str, Any]]] = {}
         self.hits = 0
@@ -74,6 +81,9 @@ class SemanticCache:
     ) -> Optional[Any]:
         """Find a semantically similar cached response.
 
+        If a health_check_fn was provided and the backend (e.g. Redis)
+        is unreachable, the entire cache is cleared and None is returned.
+
         Args:
             url: The page URL (exact match required).
             prompt: The extraction prompt (semantic match).
@@ -83,6 +93,16 @@ class SemanticCache:
         Returns:
             Cached response if found and valid, None otherwise.
         """
+        if self._health_check:
+            healthy = self._health_check()
+            if not healthy:
+                if self._was_healthy:
+                    self.clear()
+                    self._was_healthy = False
+                self.misses += 1
+                return None
+            self._was_healthy = True
+
         entries = self._data.get(url)
         if not entries:
             self.misses += 1

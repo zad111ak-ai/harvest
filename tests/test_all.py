@@ -1018,6 +1018,55 @@ def test_semantic_cache_clear():
     assert stats["hits"] == 0
 
 
+def test_semantic_cache_health_check_clears_on_failure():
+    """Semantic cache should clear all entries when health check fails."""
+    from harvest.semantic_cache import SemanticCache
+
+    healthy = True
+    def health_check():
+        return healthy
+
+    cache = SemanticCache(health_check_fn=health_check)
+    cache.set("https://example.com", "prompt", "<html></html>", "data")
+
+    # Should return cached when healthy
+    assert cache.get("https://example.com", "prompt") is not None
+
+    # Simulate connection loss
+    healthy = False
+    assert cache.get("https://example.com", "prompt") is None  # cleared
+    assert cache.stats()["total_entries"] == 0
+
+    # Should work again when healthy
+    healthy = True
+    cache.set("https://example.com", "prompt", "<html></html>", "data")
+    assert cache.get("https://example.com", "prompt") is not None
+
+
+def test_response_cache_health_check_clears_on_failure():
+    """ResponseCache should clear all entries when health check fails."""
+    from harvest.cache import ResponseCache
+
+    healthy = True
+    def health_check():
+        return healthy
+
+    cache = ResponseCache(ttl_seconds=3600, health_check_fn=health_check)
+    cache.set("key", "value")
+
+    # Should return cached when healthy
+    assert cache.get("key") == "value"
+
+    # Simulate connection loss
+    healthy = False
+    assert cache.get("key") is None  # cleared
+
+    # Should work again when healthy
+    healthy = True
+    cache.set("key", "value2")
+    assert cache.get("key") == "value2"
+
+
 # ── Structural Diff tests ──
 
 
