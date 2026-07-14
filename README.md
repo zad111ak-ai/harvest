@@ -60,7 +60,7 @@ harvest llm-extract https://books.toscrape.com \
 | Preprocessing modes (4 modes) | ✅ full/economy/hybrid/auto | ❌ | ❌ |
 | Anti-fingerprinting (24 UAs) | ✅ | ❌ | ✅ |
 | One command, zero config | ✅ | ✅ | ✅ |
-| Marketplace templates (Ozon/WB) | ✅ | ❌ | ❌ |
+| Marketplace templates (Amazon, eBay, Etsy) | ✅ | ❌ | ❌ |
 | Price | **Free** | **Free** | $50/mo |
 **Keywords:** web scraping python, llm web scraper, cloudflare bypass scraper, mcp server scraping, open source alternative to Firecrawl, scrape without API key, python web scraping library
 
