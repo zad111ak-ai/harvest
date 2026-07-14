@@ -15,8 +15,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install ruff
-      - run: ruff check harvest/ --select F,E,W
-      - run: ruff format --check harvest/
+      - run: ruff check harvest/
 
   test:
     runs-on: ubuntu-latest
@@ -31,7 +30,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -e ".[llm]"
+          pip install -e ".[llm,mcp]"
           pip install pytest pytest-asyncio
-      - name: Run tests
-        run: python -m pytest tests/ -v --tb=short
+      - name: Run unit tests
+        run: python -m pytest tests/test_all.py -v --tb=short

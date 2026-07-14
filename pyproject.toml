@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "harvest-agent"
-version = "0.7.0"
+version = "0.6.3"
 description = "Universal web collection engine — extract, monitor, and search any website through Cloudflare"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,6 +31,7 @@ yolo = ["ultralytics>=8.0"]
 server = ["fastapi>=0.109.0", "uvicorn>=0.27.0"]
 rich = ["rich>=13.0"]
 all = ["harvest-agent[llm,yolo,server,rich]"]
+mcp = ["mcp>=1.0"]
 
 [project.scripts]
 harvest = "harvest.cli:main"
