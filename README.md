@@ -1,201 +1,38 @@
-# 🌾 Harvest — Open-Source AI Web Scraper with Cloudflare Bypass & LLM Extraction
+# 🌾 Harvest — Open-Source AI Web Scraper
 
 [![GitHub Stars](https://img.shields.io/github/stars/zad111ak-ai/harvest?style=social)](https://github.com/zad111ak-ai/harvest)
-
-**Free, open-source alternative to Firecrawl, Crawl4AI, and ScrapeGraphAI.** Extract structured data from any website — bypasses Cloudflare, uses LLM for natural-language extraction, and runs as an MCP server for AI agents. **No API keys required, no cloud, 100% local.**
-
-![Logo](./new_logo.jpg)
-
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python)](https://python.org)
 [![Scrapling](https://img.shields.io/badge/scrapling-0.4.9%2B-FF6B35?logo=python)](https://github.com/DoreenR/Scrapling)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![GitHub release](https://img.shields.io/github/v/release/zad111ak-ai/harvest?logo=github)](https://github.com/zad111ak-ai/harvest/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/zad111ak-ai/harvest/ci.yml?logo=github)](https://github.com/zad111ak-ai/harvest/actions)
+[![Code Style](https://img.shields.io/badge/code%20style-ruff-000000)](https://github.com/astral-sh/ruff)
 [![BTC](https://img.shields.io/badge/donate-BTC-F7931A?logo=bitcoin)](https://blockchain.info/address/bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j)
 [![ETH](https://img.shields.io/badge/donate-ETH-8C8CFF?logo=ethereum)](https://etherscan.io/address/0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3)
-[![USDT](https://img.shields.io/badge/donate-USDT-26A17B?logo=tether)](https://tonviewer.com/UQAoI2i8P9-JeZhvGSUwKnymVyY5cb-1Rg7pdqoWMNena7DP)
 [![SOL](https://img.shields.io/badge/donate-SOL-9945FF?logo=solana)](https://solscan.io/account/99EtqBVTeF5UNp9a1oPi18iVXbXptTG7YQ6JeJvXMUJK)
 
----
+**Free, open-source alternative to Firecrawl, Crawl4AI, and ScrapeGraphAI.**  
+Extract structured data from any website — bypasses Cloudflare, uses LLM for natural-language extraction, and runs as an MCP server for AI agents. **No API keys required, no cloud, 100% local.**
 
-## Demo
-
-```bash
-# One command — full page content
-harvest scrape https://news.ycombinator.com
-```
-
-```bash
-# Structured data — no CSS needed
-harvest llm-extract https://books.toscrape.com \
-  --prompt "Get all book titles and prices"
-```
-
-```json
-{
-  "url": "https://books.toscrape.com",
-  "title": "Books to Scrape",
-  "extracted": {
-    "books": [
-      {"title": "A Light in the Attic", "price": "£51.77"},
-      {"title": "Tipping the Velvet", "price": "£53.74"}
-    ]
-  }
-}
-```
+![Logo](./new_logo.jpg)
 
 ---
 
-## Why Harvest?
-## Why Harvest?
-### Benchmark: Harvest vs Crawl4AI vs Firecrawl
+## Table of Contents
 
-| Feature | Harvest | Crawl4AI (72k★) | Firecrawl |
-|---|---|---|---|
-| **Semantic Cache** | ✅ Meaning-based, 50-70% token savings | ❌ URL-only | ❌ |
-| **Self-Healing Parsers** | ✅ Auto-regenerate broken selectors via LLM | ❌ | ❌ |
-| **Structural Diff** | ✅ DOM change detection + summary | ❌ | ❌ |
-| Cloudflare/Turnstile bypass | ✅ Built-in (Scrapling) | ⚠️ Basic | ✅ |
-| LLM extraction (natural language) | ✅ Any OpenAI API | ✅ | ✅ |
-| MCP server (AI agent integration) | ✅ | ❌ | ❌ |
-| Preprocessing modes (4 modes) | ✅ full/economy/hybrid/auto | ❌ | ❌ |
-| Anti-fingerprinting (24 UAs) | ✅ | ❌ | ✅ |
-| One command, zero config | ✅ | ✅ | ✅ |
-| Marketplace templates (Ozon/WB) | ✅ | ❌ | ❌ |
-| Price | **Free** | **Free** | $50/mo |
-**Keywords:** web scraping python, llm web scraper, cloudflare bypass scraper, mcp server scraping, open source alternative to Firecrawl, scrape without API key, python web scraping library
-
-
-## 🧠 Semantic Cache (v0.6.3)
-
-**Save 50-70% LLM tokens** on repeated queries. Cache works by *meaning*, not exact text.
-
-```bash
-# Enable semantic cache
-harvest llm-extract https://shop.com --prompt "Get all prices" --semantic-cache
-
-# Check cache stats
-harvest cache-stats
-```
-
-**How it works:**
-1. First query: "Extract all product prices" → LLM → result cached
-2. Second query: "Get product prices" → **cache hit** (0 tokens used)
-3. Third query: "Find prices on page" → **cache hit** (0 tokens used)
-
-**Invalidation:** Cache auto-invalidates when HTML changes (content hash).
-
----
-
-## 🔧 Self-Healing Parsers (v0.6.3)
-
-**Never lose data to website changes.** Auto-regenerate broken CSS selectors via LLM.
-
-```bash
-# Enable self-healing
-harvest llm-extract https://shop.com --prompt "Get prices" --self-healing
-```
-
-**How it works:**
-1. Test existing selectors on new HTML
-2. If broken → send old/new HTML to LLM
-3. LLM generates new selectors
-4. Validate new selectors → save if working
-
-**History:** All selector changes stored in `~/.harvest/self_healing/`
-
----
-
-## 📊 Structural Diff (v0.6.3)
-
-**See exactly what changed** on any website. Like `git diff` for web pages.
-
-```bash
-# Capture snapshot
-harvest snapshot https://shop.com --name v1.0
-
-# Later: compare with current
-harvest diff https://shop.com v1.0 latest
-```
-
-**Output:**
-```
-📊 Structural Diff for https://shop.com
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🆕 Added:
-  • Block "Recommendations" (after description)
-  • Field "Delivery" (in sidebar)
-
-❌ Removed:
-  • Field "SKU" (was in header)
-
-🔄 Changed:
-  • Price: <span class="price"> → <div class="price-container">
-
-💡 Recommendation:
-  Update selector: .price → .price-container .price-value
-```
-
----
-
----
-
-## 🤖 Script Generator (v0.6.3)
-
-**Zero-token scraping.** Analyzes a page with LLM once to discover CSS selectors,
-then generates a standalone Python script that extracts the same data forever — 0 LLM tokens at runtime.
-
-Like ScrapeGraphAI's script generation, but you keep the script.
-
-```bash
-# Analyze a page and generate a scraper (one-time LLM cost)
-harvest generate https://shop.com --fields title price image
-
-# Generated script is fully standalone — no Harvest needed
-./scrape_generated.py https://shop.com/page/123
-
-# Batch mode
-./scrape_generated.py urls.txt --csv prices.csv
-```
-
-**Why it matters:**
-| Before (LLM every time) | After (one LLM, zero forever) |
-|---|---|
-| harvest llm-extract — 2K tokens/run | harvest generate — one-time 4K tokens |
-| 1000 runs = 2M tokens ($0.30-2.00) | 1000 runs = **$0.00** |
-| Needs LLM endpoint running | Pure Python + Scrapling, runs anywhere |
-| Slow (LLM latency each call) | Fast (Scrapling HTTP + BeautifulSoup) |
-
-**What's generated:**
-- Self-contained Python script with hardcoded CSS selectors
-- Pagination support (if detected)
-- CSV/JSON export
-- Batch URL processing from file
-- Retry logic + random delays for anti-detection
-- Stealth headers
-
----
-
-## Features
-
-| Capability | Harvest | Browse AI ($50/mo) | Octoparse ($80/mo) | ScrapingBee ($50/mo) |
-|---|---|---|---|---|
-| Cloudflare bypass | ✅ | ✅ | ❌ | ✅ |
-| Anti-fingerprinting (24 UAs, WebGL, Canvas) | ✅ | ❌ | ❌ | ❌ |
-| JS rendered pages | ✅ | ❌ | ✅ | ✅ |
-| **LLM extraction (describe, not code)** | **✅** | ❌ | ❌ | ❌ |
-| Structured extraction (CSS) | ✅ | ✅ | ✅ | ❌ |
-| Change monitoring + diffs | ✅ | ✅ | ❌ | ❌ |
-| Full site crawling | ✅ | ❌ | ✅ | ❌ |
-| Contact/email collection | ✅ | ❌ | ✅ | ❌ |
-| MCP server (AI agent interface) | ✅ | ❌ | ❌ | ❌ |
-| Rate limiting + caching | ✅ | ❌ | ❌ | ❌ |
-| **Price** | **Free** | $50/mo | $80/mo | $50/mo |
-
-**New in v0.6.3:**
-| Feature | Harvest | Crawl4AI | Firecrawl |
-|---|---|---|---|
-| **Script Generator** | ✅ Generate standalone scripts (0 tokens) | ❌ | ❌ |
+- [Quick Start](#quick-start)
+- [Features](#features)
+- [Commands](#commands)
+- [LLM Extraction](#-llm-extraction)
+- [Preprocessing Modes](#preprocessing-modes)
+- [Python API](#python-api)
+- [MCP Server](#mcp-server-for-ai-agents)
+- [Configuration](#configuration)
+- [Benchmark](#benchmark-harvest-vs-crawl4ai-vs-firecrawl)
+- [How It Works](#how-it-works)
+- [Requirements](#requirements)
+- [Changelog](#changelog)
+- [License](#license)
 
 ---
 
@@ -205,18 +42,16 @@ harvest generate https://shop.com --fields title price image
 pip install scrapling aiohttp
 git clone https://github.com/zad111ak-ai/harvest
 cd harvest
-
-# Install CLI
 pip install -e .
 
-# Scrape any page
+# Full page content
 harvest scrape https://news.ycombinator.com
 
-# Extract by CSS
+# Structured data by CSS
 harvest extract https://books.toscrape.com \
   --schema '{"title": "h3 a", "price": ".price_color"}'
 
-# Extract by AI (describe in plain language!)
+# Structured data by AI (describe in plain language)
 harvest llm-extract https://books.toscrape.com \
   --prompt "Get all book titles, prices, and availability"
 
@@ -232,107 +67,74 @@ harvest contacts https://company.com
 # Batch from file
 harvest batch urls.txt --concurrency 10
 
-# Discover all URLs on a site
+# Discover all URLs
 harvest map https://docs.example.com
 
-# Check installation health
+# Check installation
 harvest doctor
 ```
 
 ---
 
-## Preprocessing Modes (v0.6.3)
+## Features
 
-Harvest has 4 preprocessing modes for different use cases. **Default is `full`** — safe, zero data loss.
+### Core
 
-### Quick comparison
+| Capability | Harvest | Browse AI ($50/mo) | Octoparse ($80/mo) | ScrapingBee ($50/mo) |
+|---|---|---|---|---|
+| Cloudflare bypass | ✅ | ✅ | ❌ | ✅ |
+| Anti-fingerprinting (24 UAs, WebGL, Canvas) | ✅ | ❌ | ❌ | ❌ |
+| JS rendered pages | ✅ | ❌ | ✅ | ✅ |
+| **LLM extraction (describe, not code)** | **✅** | ❌ | ❌ | ❌ |
+| Structured extraction (CSS) | ✅ | ✅ | ✅ | ❌ |
+| Change monitoring + diffs | ✅ | ✅ | ❌ | ❌ |
+| Full site crawling | ✅ | ❌ | ✅ | ❌ |
+| Contact/email collection | ✅ | ❌ | ✅ | ❌ |
+| MCP server (AI agent interface) | ✅ | ❌ | ❌ | ❌ |
+| Rate limiting + caching | ✅ | ❌ | ❌ | ❌ |
+| **Price** | **Free** | $50/mo | $80/mo | $50/mo |
 
-| Mode | Token savings | Data loss risk | Best for |
-|---|---|---|---|
-| `full` | 0-40% | ❌ None | Default. Debugging. When you need every byte. |
-| `economy` | 70-90% | ⚠️ Low | LLM extraction. RAG systems. Embeddings. |
-| `hybrid` | 85-95% | ⚠️ Low | AI agents. Structured extraction pipelines. |
-| `auto` | varies | ⚠️ Low | Smart detection. Picks best mode per page. |
+### Intelligence (v0.6.3+)
 
-### Usage
-
-```bash
-# Default: full mode (safe, preserves everything)
-harvest scrape https://example.com
-
-# Economy: save tokens for LLM processing
-harvest scrape https://shop.com --mode economy
-
-# Hybrid: economy + extraction context for AI
-harvest llm-extract https://shop.com --mode hybrid --prompt "Get all products"
-
-# Auto: smart detection (picks best mode automatically)
-harvest scrape https://any-site.com --mode auto
-```
-
-### What each mode does
-
-**`full` (default)**
-- Removes: scripts, styles, comments, hidden elements
-- Keeps: ALL content, navigation, footer, sidebar, links
-- Output: Markdown with all text and links preserved
-- Risk: None. You get everything the page had.
-
-**`economy`**
-- Removes: nav, footer, sidebar, ads, boilerplate, duplicate content
-- Keeps: main content only, links as `[text](url)`
-- For catalogs: keeps first 3 items, collapses rest ("...and 47 more")
-- Output: Clean Markdown, 70-90% smaller than raw
-- Risk: May remove some content on unusual page layouts
-- Safety: Falls back to `full` if it removes >85% on non-catalog pages
-
-**`hybrid`**
-- Everything `economy` does, PLUS:
-- Adds extraction context header for LLMs
-- Tells LLM: "This is a CATALOG with 20 items. Here are 3 examples. Extract all."
-- Output: Economy Markdown + extraction instructions
-- Risk: Same as economy. Context header adds ~200 chars.
-
-**`auto`**
-- Detects page type (article/catalog/mixed)
-- Articles → uses `economy` mode
-- Catalogs → uses `hybrid` mode
-- Falls back gracefully if detection fails
-- Risk: Same as underlying mode chosen
-
-### ⚠️ Honest trade-offs
-
-**What you lose with economy/hybrid:**
-- Navigation menus, footers, sidebars (usually useless)
-- Exact HTML structure (CSS classes, tag hierarchy)
-- Text inside images (infographics, screenshots)
-- Content hidden behind JS clicks ("Show phone number")
-
-**What you keep:**
-- All text content
-- All links as standard `[text](url)` Markdown
-- All prices, titles, descriptions
-- Semantic structure (headings, paragraphs, lists)
-
-**When to use `full`:**
-- Debugging what the page actually contains
-- Downstream parsers that need raw HTML structure
-- Sites where economy mode removes too much
-- When you're not sure what you need
-
-**When to use `economy` or `hybrid`:**
-- Sending content to LLM for extraction
-- Building RAG systems or embeddings
-- Processing many pages (cost savings compound)
-- Catalog/listing pages with repetitive structure
+| Feature | Description |
+|---|---|
+| **🧠 Semantic Cache** | Meaning-based cache, saves 50-70% LLM tokens |
+| **🔧 Self-Healing Parsers** | Auto-regenerate broken CSS selectors via LLM |
+| **📊 Structural Diff** | DOM change detection with human-readable summary |
+| **🤖 Script Generator** | Analyze once with LLM, generate standalone scraper — 0 tokens at runtime |
+| **⚡ Preprocessing Modes** | 4 modes (full/economy/hybrid/auto) for different use cases |
 
 ---
 
-## ✨ LLM Extraction (v0.5.0)
+## Commands
 
-**The killer feature.** No other free scraping tool has this.
+| Command | Description |
+|---|---|
+| `harvest scrape <url>` | Page content as Markdown/text/HTML |
+| `harvest extract <url> --schema JSON` | Structured data by CSS selectors |
+| `harvest llm-extract <url> --prompt TEXT` | **Structured data by AI description** |
+| `harvest llm-extract --prompt TEXT --semantic-cache` | AI extraction with token caching |
+| `harvest llm-extract --prompt TEXT --self-healing` | AI extraction with auto-healing selectors |
+| `harvest monitor <url>` | Track page changes with diffs |
+| `harvest crawl <url> --max-pages N` | Crawl entire site |
+| `harvest map <url>` | Discover all URLs (sitemap + robots + links) |
+| `harvest contacts <url>` | Emails, social links, phones |
+| `harvest batch <file> --concurrency N` | Process many URLs |
+| `harvest pipeline "scrape URL \| extract SCHEMA"` | Chain operations |
+| `harvest screenshot <url>` | Full-page screenshot |
+| `harvest search <query>` | Web search |
+| `harvest doctor` | Check installation health |
+| `harvest snapshot <url>` | Capture DOM structure for diff |
+| `harvest diff <url> <old> <new>` | Compare DOM snapshots |
+| `harvest cache-stats` | Semantic cache statistics |
+| `harvest generate <url> --fields F1 F2` | Generate standalone scraping script |
+| `harvest-mcp` | MCP server for AI agents |
 
-Instead of writing CSS selectors, just describe what you want:
+---
+
+## ✨ LLM Extraction
+
+**The killer feature.** Describe what you want in plain language — no CSS selectors needed.
 
 ```bash
 # Get product data
@@ -349,12 +151,12 @@ harvest llm-extract https://example.com \
   --schema '{"company": "string", "address": "string", "phone": "string"}'
 ```
 
-How it works:
+**How it works:**
 1. Harvest scrapes the page through Cloudflare
 2. Content is sent to a local LLM (via OmniRoute, Ollama, or any OpenAI-compatible API)
 3. LLM returns structured JSON — no regex, no CSS, no pain
 
-**Zero external API costs.** Works with any local LLM endpoint. Configure:
+**Zero external API costs.** Works with any local LLM endpoint:
 
 ```yaml
 # ~/.harvest/config.yaml
@@ -364,31 +166,85 @@ llm:
   api_key: "sk-..."
 ```
 
+### Semantic Cache
+
+**Save 50-70% LLM tokens** on repeated queries. Cache works by *meaning*, not exact text.
+
+```bash
+# Enable semantic cache
+harvest llm-extract https://shop.com --prompt "Get all prices" --semantic-cache
+
+# Check cache stats
+harvest cache-stats
+```
+
+**How it works:**
+1. First query: "Extract all product prices" → LLM → result cached
+2. Second query: "Get product prices" → **cache hit** (0 tokens used)
+3. If the HTML content changes, the cache auto-invalidates
+
+### Self-Healing Parsers
+
+**Never lose data to website changes.** Auto-regenerate broken CSS selectors via LLM.
+
+```bash
+harvest llm-extract https://shop.com --prompt "Get prices" --self-healing
+```
+
+**How it works:**
+1. Test existing selectors on new HTML
+2. If broken → send old/new HTML to LLM
+3. LLM generates new selectors
+4. Validate new selectors → save if working
+
+### Script Generator
+
+**Zero-token scraping.** Analyze a page with LLM once, generate a standalone Python script that extracts the same data forever.
+
+```bash
+# Analyze and generate (one-time LLM cost)
+harvest generate https://shop.com --fields title price image
+
+# Run generated script — no LLM needed
+./scrape_generated.py https://shop.com/page/123
+
+# Batch mode
+./scrape_generated.py urls.txt --csv prices.csv
+```
+
+| Before (LLM every time) | After (one LLM, zero forever) |
+|---|---|
+| `harvest llm-extract` — 2K tokens/run | `harvest generate` — one-time 4K tokens |
+| 1000 runs = 2M tokens ($0.30–$2.00) | 1000 runs = **$0.00** |
+| Needs LLM endpoint running | Pure Python + Scrapling, runs anywhere |
+| Slow (LLM latency per call) | Fast (HTTP + BeautifulSoup) |
+
 ---
 
-## All Commands
+## Preprocessing Modes
 
-| Command | Description |
-|---|---|
-| `harvest scrape <url>` | Page content as Markdown/text/HTML |
-| `harvest extract <url> --schema JSON` | Structured data by CSS selectors |
-| `harvest llm-extract <url> --prompt TEXT` | **Structured data by AI description** |
-| `harvest llm-extract <url> --prompt TEXT --semantic-cache` | **AI extraction with token caching** |
-| `harvest llm-extract <url> --prompt TEXT --self-healing` | **AI extraction with auto-healing selectors** |
-| `harvest monitor <url>` | Track page changes with diffs |
-| `harvest crawl <url> --max-pages N` | Crawl entire site |
-| `harvest map <url>` | **Discover all URLs on a site (sitemap + links)** |
-| `harvest contacts <url>` | Emails, social links, phones |
-| `harvest batch <file> --concurrency N` | Process many URLs |
-| `harvest pipeline "scrape URL | extract SCHEMA"` | Chain operations |
-| `harvest screenshot <url>` | Full-page screenshot |
-| `harvest search <query>` | Web search |
-| `harvest doctor` | **Check installation health** |
-| `harvest snapshot <url>` | **Capture DOM structure for diff** |
-| `harvest diff <url> <old> <new>` | **Compare DOM snapshots** |
-| `harvest cache-stats` | **Semantic cache statistics** |
-| `harvest generate <url> --fields F1 F2` | **Generate standalone scraping script (0 token cost)** |
-| `harvest-mcp` | MCP server for AI agents |
+Harvest has 4 preprocessing modes. **Default is `full`** — safe, zero data loss.
+
+| Mode | Token savings | Data loss risk | Best for |
+|---|---|---|---|
+| `full` | 0-40% | ❌ None | Default. Debugging. When you need every byte. |
+| `economy` | 70-90% | ⚠️ Low | LLM extraction. RAG systems. Embeddings. |
+| `hybrid` | 85-95% | ⚠️ Low | AI agents. Structured extraction pipelines. |
+| `auto` | varies | ⚠️ Low | Smart detection. Picks best mode per page. |
+
+```bash
+# Full mode (default, preserves everything)
+harvest scrape https://example.com
+
+# Economy mode for LLM
+harvest scrape https://shop.com --mode economy
+
+# Hybrid: economy + extraction context for AI
+harvest llm-extract https://shop.com --mode hybrid --prompt "Get all products"
+
+# Auto: smart detection
+harvest scrape https://any-site.com --mode auto
+```
 
 ---
 
@@ -420,8 +276,34 @@ async def main():
     )
     print(result["extracted"])
 
+    # With semantic cache
+    from harvest import SemanticCache
+    cache = SemanticCache()
+    cached = cache.get("https://shop.com", "Get all prices")
+    if not cached:
+        result = await llm.extract(
+            url="https://shop.com",
+            description="Get all prices",
+        )
+        cache.set("https://shop.com", "Get all prices",
+                  html=result.get("content", ""),
+                  response=result.get("extracted", {}))
+
 asyncio.run(main())
 ```
+
+### Key Classes
+
+| Class | Purpose |
+|---|---|
+| `Scraper` | Full-page scraper with Cloudflare bypass, caching, rate limiting |
+| `SchemaExtractor` | CSS-selector-based structured extraction |
+| `LLMExtractor` | AI-powered natural language extraction |
+| `SemanticCache` | Meaning-based response cache (saves LLM tokens) |
+| `ResponseCache` | TTL-based response cache for page content |
+| `ChangeWatcher` | Page change detection with diffs |
+| `SiteCrawler` | Full-site crawling with sitemap support |
+| `ContactCollector` | Email/social link extraction |
 
 ---
 
@@ -430,23 +312,17 @@ asyncio.run(main())
 Harvest exposes everything via **Model Context Protocol (MCP)** — works with Claude, Cursor, Hermes, and any MCP client.
 
 ```bash
-# Install
 pip install -e ".[mcp]"
-
-# Test
-harvest-mcp --version
-
-# Register with Hermes
 hermes mcp add harvest --command 'harvest-mcp'
 ```
 
-**Available MCP tools:**
+### Available MCP Tools
 
 | Tool | Description |
 |---|---|
 | `scrape(url, extraction?)` | Scrape a page |
 | `extract(url, schema)` | CSS-based extraction |
-| `llm_extract(url, prompt, schema?)` | **AI-based extraction** |
+| `llm_extract(url, prompt, schema?)` | AI-based extraction |
 | `batch(urls, concurrency?)` | Process multiple URLs |
 | `contacts(url, depth?)` | Collect contacts |
 | `crawl(url, max_pages?)` | Crawl a site |
@@ -460,25 +336,48 @@ hermes mcp add harvest --command 'harvest-mcp'
 ```yaml
 # ~/.harvest/config.yaml
 proxy:
-  url: ""                        # Leave blank = direct
-  use_scrapling: true            # Scrapling built-in proxy
+  url: ""                   # Leave blank = direct
+  rotation_file: ""
+  rotation_interval: 10
 
 scraper:
-  rate_limit: "5/1s"             # 5 req/sec
-  concurrency: 3                 # Parallel requests
-  timeout: 30                    # Seconds
+  rate_limit: 10             # req/min
+  timeout: 30                # seconds
   retries: 3
 
-llm:                             # For llm-extract command
+llm:
   base_url: "http://localhost:3000/v1"
   model: "auto/best-chat"
   api_key: "sk-..."
 
 export:
   default_format: json
+  csv_delimiter: ","
+
+notify:
+  telegram_token: ""
+  telegram_chat_id: ""
+  webhook_url: ""
 ```
 
 All fields are optional. Works out of the box with zero config.
+
+---
+
+## Benchmark: Harvest vs Crawl4AI vs Firecrawl
+
+| Feature | Harvest | Crawl4AI (72k★) | Firecrawl |
+|---|---|---|---|
+| **Semantic Cache** | ✅ Meaning-based, 50-70% token savings | ❌ URL-only | ❌ |
+| **Self-Healing Parsers** | ✅ Auto-regenerate broken selectors via LLM | ❌ | ❌ |
+| **Structural Diff** | ✅ DOM change detection + summary | ❌ | ❌ |
+| Cloudflare/Turnstile bypass | ✅ Built-in (Scrapling) | ⚠️ Basic | ✅ |
+| LLM extraction (natural language) | ✅ Any OpenAI API | ✅ | ✅ |
+| MCP server (AI agent integration) | ✅ | ❌ | ❌ |
+| Preprocessing modes (4 modes) | ✅ full/economy/hybrid/auto | ❌ | ❌ |
+| Anti-fingerprinting (24 UAs) | ✅ | ❌ | ✅ |
+| One command, zero config | ✅ | ✅ | ✅ |
+| Price | **Free** | **Free** | $50/mo |
 
 ---
 
@@ -487,10 +386,10 @@ All fields are optional. Works out of the box with zero config.
 1. **Scrapling** launches a headless Chromium with anti-detection fingerprints
 2. **Cloudflare/anti-bot** challenges are solved automatically
 3. **Content** is extracted from the rendered DOM
-4. **LLM** parses content into structured JSON (when using llm-extract)
+4. **LLM** parses content into structured JSON (when using `llm-extract`)
 5. **Snapshots** saved locally for change detection
 
-> Bypasses Cloudflare JS challenges and Interstitial pages. Turnstile checkbox (behavioral biometrics) may still block — marked as "needs manual action."
+> Bypasses Cloudflare JS challenges and Interstitial pages. Turnhstile checkbox (behavioral biometrics) may still block — marked as "needs manual action."
 
 ---
 
@@ -498,10 +397,8 @@ All fields are optional. Works out of the box with zero config.
 
 - Python 3.10+
 - [Scrapling](https://github.com/DoreenR/Scrapling) 0.4.9+
-- Chromium (auto-downloaded)
+- Chromium (auto-downloaded by Scrapling on first use)
 - Optional: any OpenAI-compatible LLM endpoint for `llm-extract`
-
-Install in 10 seconds:
 
 ```bash
 pip install scrapling aiohttp
@@ -510,34 +407,29 @@ pip install -e .
 
 ---
 
-## v0.6.3 Changelog
+## Changelog
 
-- 🤖 **Script Generator** — analyze once, scrape forever. `harvest generate <url> --fields title price`
+### v0.6.3
+- 🤖 **Script Generator** — `harvest generate <url> --fields title price`
 - 🧠 **Semantic Cache** — meaning-based response cache (saves 50-70% LLM tokens)
 - 🔧 **Self-Healing Parsers** — auto-regenerate broken CSS selectors via LLM
 - 📊 **Structural Diff** — DOM structure change detection with human-readable summary
-- 📸 **`harvest snapshot`** — capture DOM structure for later comparison
-- 📊 **`harvest diff`** — compare two snapshots
-- 📈 **`harvest cache-stats`** — semantic cache statistics
-- ⚡ **4 preprocessing modes** — full/economy/hybrid/auto for different use cases
+- 📸 `harvest snapshot` / `harvest diff` — capture and compare DOM snapshots
+- 📈 `harvest cache-stats` — semantic cache statistics
+- ⚡ 4 preprocessing modes — full/economy/hybrid/auto
 
-## v0.6.1 Changelog
+### v0.6.1
+- ✨ `harvest llm-extract` — AI-powered extraction via CLI
+- ✨ `harvest map` — instant URL discovery (sitemap, robots.txt, links)
+- ✨ `harvest doctor` — installation health check
+- ✨ MCP: `llm_extract` and `map_urls` tools
 
-- ✨ **`harvest llm-extract`** — AI-powered extraction via CLI (was advertised but missing!)
-- ✨ **`harvest map`** — Instant URL discovery (sitemap, robots.txt, homepage links)
-- ✨ **`harvest doctor`** — Installation health check
-- ✨ **MCP: `llm_extract` tool** — AI extraction via Model Context Protocol
-- ✨ **MCP: `map_urls` tool** — URL discovery via MCP
-
-## v0.5.0 Changelog
-
-- ✨ **LLM extraction** — describe what you want, get JSON. No CSS needed
-- 🔒 **Enhanced stealth** — 24 rotating User-Agents, randomized viewport/timezone/locale
-- ⚡ **Response caching** — in-memory TTL cache, zero-cost repeat requests
-- 🚦 **Rate limiting** — token bucket, configurable
-- 🧠 **Adaptive error logging** — self-learning loop integration
-- 🔧 **Persistent browser session** — faster repeated scrapes
-- 🐛 CaptchaSolver import fix
+### v0.5.0
+- ✨ **LLM extraction** — describe what you want, get JSON
+- 🔒 Enhanced stealth — 24 rotating UAs, randomized viewport/timezone/locale
+- ⚡ Response caching — in-memory TTL cache
+- 🚦 Rate limiting — token bucket, configurable
+- 🔧 Persistent browser session — faster repeated scrapes
 
 ---
 

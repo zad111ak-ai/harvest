@@ -24,6 +24,7 @@ import asyncio
 import json
 import logging
 from pathlib import Path
+from typing import Optional
 
 from . import __version__
 from .core import Scraper
@@ -37,6 +38,39 @@ from .config import Config
 from .batch import BatchProcessor
 
 logger = logging.getLogger(__name__)
+
+
+def _get_redis_url() -> str:
+    """Return Redis URL from env, config, or default."""
+    import os
+    url = os.environ.get("HARVEST_REDIS_URL")
+    if url:
+        return url
+    try:
+        cfg = Config()
+        return cfg.get("redis", "url", default="redis://localhost:6379/0") or ""
+    except Exception:
+        return ""
+
+
+def _redis_health_check(redis_url: str) -> Optional[Callable[[], bool]]:
+    """Create a Redis health-check callable, or None if `redis` is not installed."""
+    if not redis_url:
+        return None
+    try:
+        from redis import Redis
+    except ImportError:
+        logger.warning("redis not installed — skipping health check")
+        return None
+    client = Redis.from_url(redis_url)
+    return lambda: _redis_ping(client)
+
+
+def _redis_ping(client) -> bool:
+    try:
+        return client.ping()
+    except Exception:
+        return False
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -614,11 +648,13 @@ async def cmd_llm_extract(args):
 
     llm = LLMExtractor(base_url=base_url, model=model, api_key=api_key)
 
-    # Semantic cache check
+    _health_check = None
     if use_semantic_cache:
         from .semantic_cache import SemanticCache
 
-        _sem_cache = SemanticCache()
+        _redis_url = _get_redis_url()
+        _health_check = _redis_health_check(_redis_url)
+        _sem_cache = SemanticCache(health_check_fn=_health_check)
         cached = _sem_cache.get(url=args.url, prompt=args.prompt)
         if cached:
             result = {"url": args.url, "cached": True, "extracted": cached}
@@ -678,7 +714,7 @@ async def cmd_llm_extract(args):
     if use_semantic_cache:
         from .semantic_cache import SemanticCache
 
-        _sem_cache = SemanticCache()
+        _sem_cache = SemanticCache(health_check_fn=_health_check)
         _sem_cache.set(
             url=args.url,
             prompt=args.prompt,
