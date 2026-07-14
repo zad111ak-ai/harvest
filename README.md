@@ -65,7 +65,7 @@ harvest llm-extract https://books.toscrape.com \
 **Keywords:** web scraping python, llm web scraper, cloudflare bypass scraper, mcp server scraping, open source alternative to Firecrawl, scrape without API key, python web scraping library
 
 
-## 🧠 Semantic Cache (v0.6.2)
+## 🧠 Semantic Cache (v0.6.3)
 
 **Save 50-70% LLM tokens** on repeated queries. Cache works by *meaning*, not exact text.
 
@@ -86,7 +86,7 @@ harvest cache-stats
 
 ---
 
-## 🔧 Self-Healing Parsers (v0.6.2)
+## 🔧 Self-Healing Parsers (v0.6.3)
 
 **Never lose data to website changes.** Auto-regenerate broken CSS selectors via LLM.
 
@@ -105,7 +105,7 @@ harvest llm-extract https://shop.com --prompt "Get prices" --self-healing
 
 ---
 
-## 📊 Structural Diff (v0.6.2)
+## 📊 Structural Diff (v0.6.3)
 
 **See exactly what changed** on any website. Like `git diff` for web pages.
 
@@ -140,7 +140,7 @@ harvest diff https://shop.com v1.0 latest
 
 ---
 
-## 🤖 Script Generator (v0.6.2)
+## 🤖 Script Generator (v0.6.3)
 
 **Zero-token scraping.** Analyzes a page with LLM once to discover CSS selectors,
 then generates a standalone Python script that extracts the same data forever — 0 LLM tokens at runtime.
@@ -192,7 +192,7 @@ harvest generate https://shop.com --fields title price image
 | Rate limiting + caching | ✅ | ❌ | ❌ | ❌ |
 | **Price** | **Free** | $50/mo | $80/mo | $50/mo |
 
-**New in v0.6.2:**
+**New in v0.6.3:**
 | Feature | Harvest | Crawl4AI | Firecrawl |
 |---|---|---|---|
 | **Script Generator** | ✅ Generate standalone scripts (0 tokens) | ❌ | ❌ |
@@ -241,7 +241,7 @@ harvest doctor
 
 ---
 
-## Preprocessing Modes (v0.6.2)
+## Preprocessing Modes (v0.6.3)
 
 Harvest has 4 preprocessing modes for different use cases. **Default is `full`** — safe, zero data loss.
 
@@ -510,7 +510,7 @@ pip install -e .
 
 ---
 
-## v0.6.2 Changelog
+## v0.6.3 Changelog
 
 - 🤖 **Script Generator** — analyze once, scrape forever. `harvest generate <url> --fields title price`
 - 🧠 **Semantic Cache** — meaning-based response cache (saves 50-70% LLM tokens)
