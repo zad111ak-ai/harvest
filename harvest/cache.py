@@ -9,19 +9,39 @@ Usage:
 """
 
 import time
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 
 class ResponseCache:
-    """In-memory cache with time-to-live per entry and max size limit."""
+    """In-memory cache with time-to-live per entry and max size limit.
 
-    def __init__(self, ttl_seconds: int = 300, max_size: int = 1000):
+    Supports an optional health-check callback: when the check fails
+    (e.g. Redis connection lost) the entire cache is cleared so stale
+    data is never served across an outage.
+    """
+
+    def __init__(self, ttl_seconds: int = 300, max_size: int = 1000, health_check_fn: Optional[Callable[[], bool]] = None):
         self._ttl = ttl_seconds
         self._max_size = max_size
+        self._health_check = health_check_fn
+        self._was_healthy = True
         self._data: dict[str, tuple[float, Any]] = {}
 
     def get(self, key: str) -> Optional[Any]:
-        """Get cached value if not expired."""
+        """Get cached value if not expired.
+
+        If a health_check_fn was provided and the backend (e.g. Redis)
+        is unreachable, the entire cache is cleared and None is returned.
+        """
+        if self._health_check:
+            healthy = self._health_check()
+            if not healthy:
+                if self._was_healthy:
+                    self.clear()
+                    self._was_healthy = False
+                return None
+            self._was_healthy = True
+
         entry = self._data.get(key)
         if entry is None:
             return None
