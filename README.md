@@ -5,8 +5,12 @@
 </p>
 
 [![GitHub Stars](https://img.shields.io/github/stars/zad111ak-ai/harvest?style=social)](https://github.com/zad111ak-ai/harvest)
+[![GitHub contributors](https://img.shields.io/github/contributors/zad111ak-ai/harvest)](https://github.com/zad111ak-ai/harvest/graphs/contributors)
+[![GitHub issues](https://img.shields.io/github/issues/zad111ak-ai/harvest)](https://github.com/zad111ak-ai/harvest/issues)
+[![GitHub pull requests](https://img.shields.io/github/issues-pr/zad111ak-ai/harvest)](https://github.com/zad111ak-ai/harvest/pulls)
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![CI](https://github.com/zad111ak-ai/harvest/workflows/CI/badge.svg)](https://github.com/zad111ak-ai/harvest/actions)
 
 <a id="russian"></a>
 ## 🇷🇺 О проекте
