@@ -343,6 +343,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_detect.add_argument("--proxy", help="Proxy URL for requests")
     p_detect.add_argument("--no-headless", action="store_true", help="Show browser window")
 
+    # P2P commands
+    sub.add_parser("p2p-stats", help="Show P2P network statistics")
+    sub.add_parser("p2p-peers", help="List known P2P peers")
+    sub.add_parser("p2p-enable", help="Enable P2P network")
+    sub.add_parser("p2p-disable", help="Disable P2P network")
+
     return parser
 
 
@@ -1134,6 +1140,80 @@ async def cmd_detect_api(args):
             print(f"\n✅ Exported {ep_count} endpoints to " + args.export)
 
 
+async def cmd_p2p_stats(args):
+    """Show P2P network statistics."""
+    from harvest.cache import ResponseCache
+    from harvest.p2p_network import P2PCacheNetwork
+    from harvest.p2p.node import P2PConfig
+
+    cache = ResponseCache()
+    config = P2PConfig()
+    net = P2PCacheNetwork(cache, config)
+
+    stats = net.get_stats()
+    enabled = stats["enabled"]
+    print("\n  P2P Network Statistics")
+    print(f"  {'=' * 40}")
+    print(f"  Status:       {'ON' if enabled else 'OFF'}")
+    print(f"  Peer ID:      {stats['peer_id']}")
+    print(f"  Peers:        {stats['connected_peers']}")
+    print(f"  Local hits:   {stats['local_hits']}")
+    print(f"  P2P hits:     {stats['p2p_hits']}")
+    print(f"  Misses:       {stats['misses']}")
+    print(f"  Hit rate:     {stats['p2p_hit_rate']:.1%}")
+    print(f"  Broadcasts:   {stats['broadcasts']}")
+    print(f"  P2P errors:   {stats['p2p_errors']}")
+    print()
+
+
+async def cmd_p2p_peers(args):
+    """List known P2P peers."""
+    from harvest.p2p.node import P2PNode, P2PConfig
+
+    config = P2PConfig()
+    node = P2PNode(config)
+    node._load_peers()
+
+    peers = node.peers
+    if not peers:
+        print("  No known peers. Connect to a network first.")
+        return
+
+    print(f"\n  Known Peers ({len(peers)})")
+    print(f"  {'=' * 50}")
+    for pid, peer in peers.items():
+        rep = peer.reputation
+        color = "HIGH" if rep > 0.7 else "MED" if rep > 0.4 else "LOW"
+        print(f"  {pid[:20]:20s}  rep={rep:.2f} [{color:3s}]  {peer.address}")
+    print()
+
+
+async def cmd_p2p_enable(args):
+    """Enable P2P network."""
+    import json
+    from pathlib import Path
+
+    config_path = Path.home() / ".harvest" / "config.json"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config = json.loads(config_path.read_text()) if config_path.exists() else {}
+    config["p2p_enabled"] = True
+    config_path.write_text(json.dumps(config, indent=2))
+    print("P2P enabled. Restart Harvest to apply.")
+
+
+async def cmd_p2p_disable(args):
+    """Disable P2P network."""
+    import json
+    from pathlib import Path
+
+    config_path = Path.home() / ".harvest" / "config.json"
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+    config = json.loads(config_path.read_text()) if config_path.exists() else {}
+    config["p2p_enabled"] = False
+    config_path.write_text(json.dumps(config, indent=2))
+    print("P2P disabled. Restart Harvest to apply.")
+
+
 # ── Main dispatcher ──
 
 
@@ -1166,6 +1246,10 @@ def main():
         "memory": cmd_memory,
         "checkpoints": cmd_checkpoints,
         "detect-api": cmd_detect_api,
+        "p2p-stats": cmd_p2p_stats,
+        "p2p-peers": cmd_p2p_peers,
+        "p2p-enable": cmd_p2p_enable,
+        "p2p-disable": cmd_p2p_disable,
     }
 
     cmd_fn = dispatch.get(args.command)

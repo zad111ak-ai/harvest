@@ -26,8 +26,10 @@ from .structural_diff import StructuralDiff
 from .self_healing import SelfHealingParser
 from .script_generator import ScriptGenerator
 from .api_detector import APIDetector
+from .p2p_network import P2PCacheNetwork
+from .p2p.node import P2PConfig
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 __all__ = [
     "Scraper",
@@ -52,5 +54,7 @@ __all__ = [
     "SelfHealingParser",
     "ScriptGenerator",
     "APIDetector",
+    "P2PCacheNetwork",
+    "P2PConfig",
     "__version__",
 ]
