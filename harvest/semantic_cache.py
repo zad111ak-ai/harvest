@@ -21,9 +21,15 @@ import time
 from collections.abc import Sequence
 from typing import Any, Optional
 
-import numpy as _np  # always available — used for cosine similarity
+# Optional dependencies — gracefully degrade when missing
+try:
+    import numpy as _np  # used for cosine similarity in embedding mode
 
-# Optional sentence-transformers dependency for embedding-based similarity
+    _HAS_NUMPY = True
+except ImportError:
+    _np = None  # type: ignore[assignment]
+    _HAS_NUMPY = False
+
 try:
     from sentence_transformers import SentenceTransformer
 
@@ -59,7 +65,7 @@ def _embedding_cosine_similarity(a: Any, b: Any) -> float:
 
     Falls back gracefully if numpy is not available.
     """
-    if a is None or b is None:
+    if a is None or b is None or _np is None:
         return 0.0
     dot = float(_np.dot(a, b))
     norm_a = float(_np.linalg.norm(a))
