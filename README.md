@@ -1,10 +1,196 @@
-# 🌾 Harvest — Open-Source AI Web Scraper with Cloudflare Bypass & LLM Extraction
+# 🌾 Harvest
+
+<p align="center">
+  <a href="#russian">🇷🇺 Русский</a> &nbsp;|&nbsp; <a href="#english">🇬🇧 English</a>
+</p>
 
 [![GitHub Stars](https://img.shields.io/github/stars/zad111ak-ai/harvest?style=social)](https://github.com/zad111ak-ai/harvest)
+[![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python)](https://python.org)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
+<a id="russian"></a>
+## 🇷🇺 О проекте
+
+**Бесплатный open-source веб-скрейпер** с обходом Cloudflare и LLM-экстракцией. Аналог Firecrawl и Crawl4AI, но без подписок и API-ключей. Работает на твоём компьютере, 100% локально.
+
+### Что умеет
+
+| Возможность | Зачем |
+|---|---|
+| **Обход Cloudflare** | Скейпим защищённые сайты без CAPTCHA |
+| **LLM-экстракция** | Описываешь что нужно на естественном языке — получаешь JSON |
+| **Semantic Cache** | Экономит 50-70% токенов на повторных запросах |
+| **Self-Healing Parsers** | Если CSS-селектор сломался — LLM чинит сам |
+| **Script Generator** | Один раз анализируешь страницу — потом скрейпишь без LLM |
+| **MCP Server** | Подключается к Hermes, Claude, Cursor как AI-инструмент |
+| **4 режима предобработки** | full/economy/hybrid/auto — от полного HTML до компактного текста |
+
+### Быстрый старт
+
+```bash
+# Установка
+pip install harvest-agent
+
+# Скейпинг — одна команда
+harvest scrape https://example.com
+
+# LLM-экстракция — описывай что нужно
+harvest llm-extract https://shop.com \
+  --prompt "Найди все цены и названия товаров"
+
+# Проверка установки
+harvest doctor
+```
+
+### Конфигурация (для LLM-экстракции)
+
+```yaml
+# ~/.harvest/config.yaml
+llm:
+  base_url: "http://localhost:3000/v1"  # OmniRoute, Ollama, любой OpenAI-совместимый
+  model: "auto/best-chat"
+```
+
+### Все команды
+
+```bash
+harvest scrape <url>              # Контент страницы
+harvest extract <url> --schema    # CSS-экстракция
+harvest llm-extract <url>         # AI-экстракция (описание → JSON)
+harvest crawl <url>               # Обход всего сайта
+harvest contacts <url>            # Сбор email/телефонов
+harvest monitor <url>             # Мониторинг изменений
+harvest snapshot <url>            # Снимок DOM-структуры
+harvest diff <url> v1 latest      # Сравнение снимков
+harvest generate <url>            # Генерация скрипта (0 токенов)
+harvest batch urls.txt            # Пакетная обработка
+harvest map <url>                 # Отображение всех URL сайта
+harvest cache-stats               # Статистика кеша
+harvest doctor                    # Проверка здоровья
+```
+
+### Сравнение с аналогами
+
+| Возможность | Harvest | Crawl4AI | Firecrawl |
+|---|---|---|---|
+| Semantic Cache | ✅ 50-70% экономия | ❌ | ❌ |
+| Self-Healing парсеры | ✅ | ❌ | ❌ |
+| Script Generator | ✅ 0 токенов | ❌ | ❌ |
+| Structural Diff | ✅ | ❌ | ❌ |
+| Cloudflare bypass | ✅ | ⚠️ | ✅ |
+| MCP Server | ✅ | ❌ | ❌ |
+| Цена | **Бесплатно** | **Бесплатно** | $50/мес |
+
+---
+
+<a id="english"></a>
+## 🇬🇧 About
+
+**Free, open-source AI web scraper** with Cloudflare bypass & LLM extraction. An alternative to Firecrawl and Crawl4AI — no subscriptions, no API keys, 100% local.
 
 **Free, open-source alternative to Firecrawl, Crawl4AI, and ScrapeGraphAI.** Extract structured data from any website — bypasses Cloudflare, uses LLM for natural-language extraction, and runs as an MCP server for AI agents. **No API keys required, no cloud, 100% local.**
 
 ![Logo](./new_logo.jpg)
+
+<div id="russian"></div>
+
+# 🇷🇺 [Русский](#russian) | 🇬🇧 [English](#english)
+
+---
+
+# 🌾 Harvest — Open-Source AI Веб-скрапер с обходом Cloudflare и LLM-экстракцией
+
+**Бесплатная open-source альтернатива Firecrawl, Crawl4AI и ScrapeGraphAI.** Извлекайте структурированные данные с любого сайта — обходит Cloudflare, использует LLM для извлечения на естественном языке и работает как MCP-сервер для ИИ-агентов. **Без ключей API, без облака, 100% локально.**
+
+## Быстрый старт
+
+```bash
+pip install scrapling aiohttp
+git clone https://github.com/zad111ak-ai/harvest
+cd harvest
+pip install -e .
+
+# Скарапинг страницы
+harvest scrape https://news.ycombinator.com
+
+# Извлечение данных по описанию (LLM)
+harvest llm-extract https://books.toscrape.com \
+  --prompt "Получи все названия книг и цены"
+
+# Мониторинг изменений
+harvest monitor https://example.com/pricing
+
+# Обход всего сайта
+harvest crawl https://docs.example.com --max-pages 100
+
+# Поиск контактов
+harvest contacts https://company.com
+```
+
+## Ключевые возможности
+
+| Возможность | Описание |
+|---|---|
+| **🧠 Семантический кэш** | Экономия 50–70% токенов LLM. Кэш работает по смыслу, а не по тексту — одинаковые запросы обрабатываются мгновенно |
+| **🔧 Самовосстанавливающиеся парсеры** | Автоматическая перегенерация сломанных CSS-селекторов через LLM при изменении структуры сайта |
+| **📊 Структурный дифф** | Отслеживание изменений DOM-структуры как `git diff`, но для веб-страниц — с читаемым отчётом |
+| **🤖 Генератор скриптов** | Одноразовый анализ страницы через LLM → автономный Python-скрипт для скрапинга с нулевым потреблением токенов |
+| **✨ LLM-извлечение** | Опишите на естественном языке, что хотите получить — LLM вернёт структурированный JSON без CSS-селекторов |
+| **🔌 MCP-сервер** | Встроенный Model Context Protocol сервер для интеграции с Claude, Cursor, Hermes и любыми MCP-клиентами |
+| **🛡️ Обход Cloudflare** | Встроенная библиотека Scrapling обходит JS-челленджи и Interstitial-страницы Cloudflare |
+| **🔒 Анти-фингерпринтинг** | 24 ротируемых User-Agent, рандомизация Viewport/Timezone/Locale, WebGL/Canvas-защита |
+
+## Конфигурация
+
+```yaml
+# ~/.harvest/config.yaml
+proxy:
+  url: ""                        # Пусто = напрямую
+  use_scrapling: true
+
+scraper:
+  rate_limit: "5/1s"             # 5 запросов/сек
+  concurrency: 3                 # Параллельные запросы
+  timeout: 30
+  retries: 3
+
+llm:
+  base_url: "http://localhost:3000/v1"
+  model: "auto/best-chat"
+  api_key: "sk-..."
+
+export:
+  default_format: json
+```
+
+Все поля необязательны. Работает из коробки без конфигурации.
+
+## Все команды
+
+| Команда | Описание |
+|---|---|
+| `harvest scrape <url>` | Контент страницы как Markdown/text/HTML |
+| `harvest extract <url> --schema JSON` | Структурированные данные по CSS-селекторам |
+| `harvest llm-extract <url> --prompt ТЕКСТ` | **Извлечение данных по описанию ИИ** |
+| `harvest llm-extract <url> --prompt ТЕКСТ --semantic-cache` | **LLM-извлечение с кэшированием токенов** |
+| `harvest llm-extract <url> --prompt ТЕКСТ --self-healing` | **LLM-извлечение с автосамовосстановлением селекторов** |
+| `harvest monitor <url>` | Отслеживание изменений страницы |
+| `harvest crawl <url> --max-pages N` | Обход всего сайта |
+| `harvest map <url>` | **Обнаружение всех URL на сайте (sitemap + ссылки)** |
+| `harvest contacts <url>` | Email, соцсети, телефоны |
+| `harvest batch <file> --concurrency N` | Пакетная обработка URL |
+| `harvest generate <url> --fields F1 F2` | **Генерация автономного скрипта скрапинга (0 токенов)** |
+| `harvest snapshot <url>` | **Снимок DOM-структуры** |
+| `harvest diff <url> <old> <new>` | **Сравнение снимков DOM** |
+| `harvest cache-stats` | **Статистика семантического кэша** |
+| `harvest doctor` | **Проверка работоспособности установки** |
+| `harvest-mcp` | MCP-сервер для ИИ-агентов |
+
+---
+
+<div id="english"></div>
+
+## 🇬🇧 English
 
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python)](https://python.org)
 [![Scrapling](https://img.shields.io/badge/scrapling-0.4.9%2B-FF6B35?logo=python)](https://github.com/DoreenR/Scrapling)
@@ -538,6 +724,19 @@ pip install -e .
 - 🧠 **Adaptive error logging** — self-learning loop integration
 - 🔧 **Persistent browser session** — faster repeated scrapes
 - 🐛 CaptchaSolver import fix
+
+---
+
+## Donations / Донаты
+
+Если Harvest полезен — поддержите development ☕️
+
+| Валюта / Currency | Адрес / Address |
+|---|---|
+| **BTC** | `bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j` |
+| **ETH** | `0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3` |
+| **USDT (TON)** | `UQAoI2i8P9-JeZhvGSUwKnymVyY5cb-1Rg7pdqoWMNena7DP` |
+| **SOL** | `99EtqBVTeF5UNp9a1oPi18iVXbXptTG7YQ6JeJvXMUJK` |
 
 ---
 
