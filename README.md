@@ -9,6 +9,7 @@
 [![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI](https://github.com/zad111ak-ai/harvest/workflows/CI/badge.svg)](https://github.com/zad111ak-ai/harvest/actions)
+[![PyPI](https://img.shields.io/pypi/v/harvest-agent)](https://pypi.org/project/harvest-agent/)
 [![BTC](https://img.shields.io/badge/donate-BTC-F7931A?logo=bitcoin)](https://blockchain.info/address/bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j)
 [![ETH](https://img.shields.io/badge/donate-ETH-8C8CFF?logo=ethereum)](https://etherscan.io/address/0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3)
 [![USDT](https://img.shields.io/badge/donate-USDT-26A17B?logo=tether)](https://tonviewer.com/UQAoI2i8P9-JeZhvGSUwKnymVyY5cb-1Rg7pdqoWMNena7DP)
@@ -48,22 +49,31 @@ harvest doctor
 
 | Возможность | Описание |
 |---|---|
-| 🧠 **Semantic Cache** | Экономия 50–70% токенов LLM. Кэш по смыслу, а не по тексту |
-| 🔧 **Self-Healing Parsers** | Авто-починка CSS-селекторов через LLM |
-| 🤖 **Script Generator** | Один раз анализируешь → скрейпишь без LLM (0 токенов) |
-| 📊 **Structural Diff** | git diff для веб-страниц |
+| 🛡️ **Cloudflare bypass** | Обход JS-челленджей и Interstitial-страниц через Scrapling |
+| 🧠 **LLM-экстракция** | Описываешь что нужно на естественном языке → получаешь JSON |
+| 💾 **Semantic Cache** | Кэш по смыслу запроса (Jaccard + cosine similarity). Экономия 50–70% токенов |
+| 🔧 **Self-Healing Parsers** | Если CSS-селектор сломался — LLM автоматически находит рабочий |
+| 🤖 **Script Generator** | Один раз анализируешь страницу → генерируется скрипт для быстрого парсинга без LLM |
 | 🔍 **API Detector** | Обнаружение скрытых REST/GraphQL API из браузерного трафика |
-| 🌐 **P2P Cache Network** | Децентрализованный обмен кэшем между пользователями |
-| 🔌 **MCP Server** | Интеграция с Hermes, Claude, Cursor |
-| 🛡️ **Cloudflare bypass** | Обход JS-челленджей и Interstitial-страниц |
-| ✨ **4 режима предобработки** | full / economy / hybrid / auto |
+| 📊 **Structural Diff** | Сравнение изменений на странице — как git diff, но для DOM |
+| 🌐 **P2P Cache Network** | Децентрализованный обмен кэшем между пользователями через WebSocket |
+| 🔌 **MCP Server** | Интеграция с Hermes, Claude, Cursor как MCP-инструмент |
+| ✨ **4 режима предобработки** | full / economy / hybrid / auto — от полного HTML до компактного текста |
+| 🖥️ **Browser Pool** | Пул прелоаденных Chromium-инстансов — нет задержки на cold start |
+| 💿 **Persistent Cache** | SQLite-кэш, сохраняется между перезапусками |
+| ⚡ **Singleflight** | Dedup одновременных запросов — 10 параллельных → 1 реальный вызов |
+| 🎯 **Embeddings Mode** | Смысловое сравнение через sentence-transformers (all-MiniLM-L6-v2) |
+| 🕵️ **Anti-fingerprinting** | Рандомизация User-Agent, viewport, платформы, таймзоны |
+| 🧩 **Plugin System** | Плагины для расширения функционала |
+| 📡 **Notifications** | Telegram / Webhook / Stdout нотификации об изменениях |
+| 🐳 **Docker** | Multi-stage сборка + docker-compose, готов к деплою |
 
 ### Все команды
 
 | Команда | Описание |
 |---|---|
 | `harvest scrape <url>` | Контент страницы (Markdown/text/HTML) |
-| `harvest extract <url> --schema` | CSS-экстракция |
+| `harvest extract <url> --schema` | CSS-экстракция по схеме |
 | `harvest llm-extract <url> --prompt` | **AI-экстракция** (описание → JSON) |
 | `harvest detect-api <url>` | **Обнаружение скрытых API** |
 | `harvest generate <url>` | **Генерация скрипта** (0 токенов) |
@@ -77,6 +87,12 @@ harvest doctor
 | `harvest cache-stats` | Статистика кэша |
 | `harvest p2p-stats` | **Статистика P2P сети** |
 | `harvest p2p-peers` | **Список подключённых peers** |
+| `harvest serve` | **REST API сервер** (FastAPI) |
+| `harvest config` | Управление конфигурацией |
+| `harvest screenshot <url>` | Скриншот страницы |
+| `harvest shadow <url>` | **Парсинг Shadow DOM** |
+| `harvest memory` | **Мониторинг потребления RAM** |
+| `harvest pool` | **Управление Browser Pool** |
 | `harvest doctor` | Проверка здоровья |
 
 ### Сравнение с аналогами
@@ -89,7 +105,10 @@ harvest doctor
 | API Detector | ✅ | ❌ | ❌ |
 | P2P Cache Network | ✅ | ❌ | ❌ |
 | MCP Server | ✅ | ❌ | ❌ |
+| Browser Pool | ✅ | ✅ | ✅ |
+| Persistent Cache | ✅ | ✅ | ✅ |
 | Cloudflare bypass | ✅ | ⚠️ | ✅ |
+| Docker | ✅ | ✅ | ✅ |
 | Цена | **Бесплатно** | **Бесплатно** | $50/мес |
 
 ### Донаты (крипто)
@@ -135,22 +154,31 @@ harvest doctor
 
 | Feature | Description |
 |---|---|
-| 🧠 **Semantic Cache** | 50–70% LLM token savings. Cache by meaning, not text |
-| 🔧 **Self-Healing Parsers** | Auto-fix broken CSS selectors via LLM |
-| 🤖 **Script Generator** | Analyze once → scrape forever (0 tokens) |
-| 📊 **Structural Diff** | git diff for web pages |
+| 🛡️ **Cloudflare bypass** | JS challenge & Interstitial page bypass via Scrapling |
+| 🧠 **LLM extraction** | Describe what you need in natural language → get structured JSON |
+| 💾 **Semantic Cache** | Cache by query meaning (Jaccard + cosine similarity). 50–70% token savings |
+| 🔧 **Self-Healing Parsers** | Broken CSS selectors auto-fixed by LLM |
+| 🤖 **Script Generator** | Analyze once → generate a scraper script (0 tokens per run) |
 | 🔍 **API Detector** | Discover hidden REST/GraphQL APIs from browser traffic |
-| 🌐 **P2P Cache Network** | Decentralized cache sharing between users |
-| 🔌 **MCP Server** | Works with Hermes, Claude, Cursor |
-| 🛡️ **Cloudflare bypass** | JS challenges + Interstitial pages |
-| ✨ **4 preprocessing modes** | full / economy / hybrid / auto |
+| 📊 **Structural Diff** | Page change tracking — like git diff, but for DOM |
+| 🌐 **P2P Cache Network** | Decentralized cache sharing between users via WebSocket |
+| 🔌 **MCP Server** | Works with Hermes, Claude, Cursor as an MCP tool |
+| ✨ **4 preprocessing modes** | full / economy / hybrid / auto — from raw HTML to compact text |
+| 🖥️ **Browser Pool** | Pre-warmed Chromium instances — no cold start delay |
+| 💿 **Persistent Cache** | SQLite-backed cache that survives restarts |
+| ⚡ **Singleflight** | Dedup concurrent requests — 10 parallel → 1 actual call |
+| 🎯 **Embeddings Mode** | Semantic comparison via sentence-transformers (all-MiniLM-L6-v2) |
+| 🕵️ **Anti-fingerprinting** | Randomized User-Agent, viewport, platform, timezone |
+| 🧩 **Plugin System** | Extend functionality with plugins |
+| 📡 **Notifications** | Telegram / Webhook / Stdout alerts on changes |
+| 🐳 **Docker** | Multi-stage build + docker-compose, ready to deploy |
 
 ### All Commands
 
 | Command | Description |
 |---|---|
 | `harvest scrape <url>` | Page content (Markdown/text/HTML) |
-| `harvest extract <url> --schema` | CSS extraction |
+| `harvest extract <url> --schema` | CSS extraction by schema |
 | `harvest llm-extract <url> --prompt` | **AI extraction** (describe → JSON) |
 | `harvest detect-api <url>` | **Discover hidden APIs** |
 | `harvest generate <url>` | **Generate scraper script** (0 tokens) |
@@ -164,6 +192,12 @@ harvest doctor
 | `harvest cache-stats` | Cache statistics |
 | `harvest p2p-stats` | **P2P network stats** |
 | `harvest p2p-peers` | **List connected peers** |
+| `harvest serve` | **REST API server** (FastAPI) |
+| `harvest config` | Manage configuration |
+| `harvest screenshot <url>` | Page screenshot |
+| `harvest shadow <url>` | **Shadow DOM parsing** |
+| `harvest memory` | **RAM usage monitoring** |
+| `harvest pool` | **Manage Browser Pool** |
 | `harvest doctor` | Health check |
 
 ### Benchmark
@@ -176,7 +210,10 @@ harvest doctor
 | API Detector | ✅ | ❌ | ❌ |
 | P2P Cache Network | ✅ | ❌ | ❌ |
 | MCP Server | ✅ | ❌ | ❌ |
+| Browser Pool | ✅ | ✅ | ✅ |
+| Persistent Cache | ✅ | ✅ | ✅ |
 | Cloudflare bypass | ✅ | ⚠️ | ✅ |
+| Docker | ✅ | ✅ | ✅ |
 | Price | **Free** | **Free** | $50/mo |
 
 ### Donations (crypto only)
