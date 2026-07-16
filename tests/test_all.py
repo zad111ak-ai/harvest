@@ -432,7 +432,7 @@ def test_pipeline_module_import():
 def test_init_imports():
     from harvest import __version__, __doc__
 
-    assert __version__ == "0.6.2"
+    assert __version__ == "0.8.0"
     assert len(__doc__) > 0
 
 
@@ -681,7 +681,7 @@ def test_mcp_status_tool():
     import json
 
     data = json.loads(result)
-    assert data["version"] == "0.6.2"
+    assert data["version"] == "0.8.0"
     assert "scrape" in data["tools"]
     assert data["proxy_configured"] in (True, False)  # depends on env
 
@@ -763,7 +763,7 @@ def test_mcp_main_version():
         text=True,
     )
     assert result.returncode == 0
-    assert "0.6.2" in result.stdout
+    assert "0.8.0" in result.stdout
 
 
 def test_mcp_entry_point():

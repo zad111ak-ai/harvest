@@ -98,7 +98,7 @@ class ComplianceChecker:
 
     def __init__(
         self,
-        user_agent: str = "HarvestBot/0.6.2 (+https://github.com/zad111ak-ai/harvest)",
+        user_agent: str = "HarvestBot/0.8.0 (+https://github.com/zad111ak-ai/harvest)",
         timeout: int = 10,
     ):
         self.user_agent = user_agent
