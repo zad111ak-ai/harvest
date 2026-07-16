@@ -62,6 +62,9 @@ async def cmd_p2p_peers(args):
 
 async def cmd_p2p_enable(args):
     """Enable P2P network."""
+    print("⚠️  WARNING: P2P shares cache data (URL hashes, query embeddings) with other nodes.")
+    print("   Disable PII in your queries and avoid sensitive data.")
+    print("   Use 'harvest p2p-disable' to turn off.\n")
     config_path = Path.home() / ".harvest" / "config.json"
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config = json.loads(config_path.read_text()) if config_path.exists() else {}

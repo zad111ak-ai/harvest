@@ -33,7 +33,7 @@ logger = logging.getLogger("harvest.p2p")
 class P2PConfig:
     """P2P network configuration."""
 
-    enabled: bool = True
+    enabled: bool = False  # Opt-in: disabled by default (security: sends data to peers)
     host: str = "0.0.0.0"
     port: int = 8765
     bootstrap_peers: list[str] = field(
