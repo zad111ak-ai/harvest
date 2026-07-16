@@ -125,6 +125,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_crawl.add_argument("--delay", type=float, default=0.5, help="Delay between requests (seconds)")
     p_crawl.add_argument("--sitemap-only", action="store_true", help="Only fetch pages from sitemap")
     p_crawl.add_argument("--export", help="Export results to CSV file")
+    p_crawl.add_argument("--checkpoint", help="Checkpoint ID for crash recovery (auto-saves every 10 URLs)")
+    p_crawl.add_argument("--resume", help="Resume from checkpoint ID after crash")
 
     # ── search ──
     p_search = sub.add_parser("search", help="Search across supported sources")
@@ -305,6 +307,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Disable random delays in generated script",
     )
 
+    # ── pool ── Browser pool management ──
+    p_pool = sub.add_parser("pool", help="Pre-warm browser pool for instant scraping")
+    p_pool.add_argument("--warm", type=int, default=3, help="Number of browsers to pre-warm (default: 3)")
+    p_pool.add_argument("--stats", action="store_true", help="Show pool statistics")
+
+    # ── shadow ── Shadow DOM extraction ──
+    p_shadow = sub.add_parser("shadow", help="Extract content from Shadow DOM elements")
+    p_shadow.add_argument("url", help="Page URL")
+    p_shadow.add_argument("--structured", action="store_true", help="Return structured JSON (not flattened text)")
+    p_shadow.add_argument("--output", "-o", choices=["json", "txt"], default="txt", help="Output format")
+
+    # ── memory ── Memory monitoring ──
+    p_memory = sub.add_parser("memory", help="Monitor memory usage during operations")
+    p_memory.add_argument("--warn", type=float, default=500, help="Warning threshold in MB (default: 500)")
+    p_memory.add_argument("--critical", type=float, default=1024, help="Critical threshold in MB (default: 1024)")
+
+    # ── checkpoints ── Crash recovery management ──
+    p_ckpt = sub.add_parser("checkpoints", help="Manage crawl checkpoints for crash recovery")
+    p_ckpt_sub = p_ckpt.add_subparsers(dest="ckpt_cmd")
+    p_ckpt_sub.add_parser("list", help="List all checkpoints")
+    p_ckpt_show = p_ckpt_sub.add_parser("show", help="Show checkpoint details")
+    p_ckpt_show.add_argument("id", help="Checkpoint crawl ID")
+    p_ckpt_del = p_ckpt_sub.add_parser("delete", help="Delete a checkpoint")
+    p_ckpt_del.add_argument("id", help="Checkpoint crawl ID")
+
     return parser
 
 
@@ -399,16 +426,50 @@ async def cmd_contacts(args):
 
 
 async def cmd_crawl(args):
+    from .recovery import CrawlCheckpoint
+
+    # Checkpoint/resume support
+    ckpt_id = args.resume or args.checkpoint
+    checkpoint = CrawlCheckpoint(ckpt_id) if ckpt_id else None
+
+    visited = set()
+    queue = []
+
+    if args.resume and checkpoint:
+        state = checkpoint.load()
+        if state:
+            visited = state["visited"]
+            queue = state["queue"]
+            print(f"🔄 Resuming crawl '{args.resume}': {len(visited)} visited, {len(queue)} queued")
+        else:
+            print(f"⚠️  No checkpoint found for '{args.resume}', starting fresh")
+    elif args.checkpoint:
+        print(f"💾 Checkpoint enabled: '{args.checkpoint}' (auto-saves every 10 URLs)")
+
     crawler = SiteCrawler(
         proxy=args.proxy,
         headless=not args.no_headless,
         delay=args.delay,
     )
+
     result = await crawler.crawl(
         args.url,
         max_pages=args.max_pages,
         sitemap_only=args.sitemap_only,
     )
+
+    # Save final checkpoint
+    if checkpoint and result.get("pages"):
+        all_urls = set(p.get("url", "") for p in result.get("pages", []))
+        checkpoint.save(
+            all_urls,
+            [],
+            {
+                "total_pages": result["total_pages"],
+                "start_url": args.url,
+            },
+        )
+        print(f"💾 Checkpoint saved: {len(all_urls)} URLs")
 
     if args.export:
         csv_output = Exporter.to_csv(result.get("pages", []))
@@ -876,12 +937,16 @@ async def cmd_batch(args):
 
 
 async def cmd_serve(args):
-    """Start the HTTP API server."""
+    """Start the HTTP API server with WebSocket streaming."""
     from .server import run_server
+    from .streaming import get_streamer
 
     cfg = Config()
     host = args.host or cfg.get("server", "host", default="0.0.0.0")
     port = args.port or cfg.get("server", "port", default=8590)
+
+    get_streamer()  # Initialize global stats collector
+
     run_server(config=cfg, host=host, port=port)
 
 
@@ -931,6 +996,101 @@ async def cmd_generate(args):
     print(f"   Batch: python3 {args.output} urls.txt --csv output.csv", file=sys.stderr)
 
 
+# ── New features: pool, shadow, memory, checkpoints ──
+
+
+async def cmd_pool(args):
+    """Pre-warm browser pool."""
+    from .browser_pool import BrowserPool
+
+    pool = BrowserPool(warm_count=args.warm, proxy=args.proxy)
+    await pool.start()
+
+    if args.stats:
+        import json
+
+        print(json.dumps(pool.get_stats(), indent=2))
+    else:
+        print(f"✅ Browser pool warmed: {len(pool._warm)} browsers ready")
+        print("   Use: harvest scrape <url> --use-pool")
+
+    await pool.stop()
+
+
+async def cmd_shadow(args):
+    """Extract Shadow DOM content."""
+    from .browser import BrowserSession
+    from .shadow_dom import flatten_shadow_dom, extract_shadow_dom_structured, has_shadow_dom
+    import json
+
+    async with BrowserSession(proxy=args.proxy) as session:
+        await session.fetch(args.url, extraction_type="html")
+        page = session.get_playwright_page()
+
+        has_shadow = await has_shadow_dom(page)
+        print(f"🔍 Shadow DOM detected: {'Yes' if has_shadow else 'No'}", flush=True)
+
+        if args.structured:
+            result = await extract_shadow_dom_structured(page)
+            output = json.dumps(result, indent=2, ensure_ascii=False)
+        else:
+            result = await flatten_shadow_dom(page)
+            output = result or ""
+
+    if args.output == "json":
+        print(
+            json.dumps(
+                {"url": args.url, "has_shadow_dom": has_shadow, "content": output[:5000]}, indent=2, ensure_ascii=False
+            )
+        )
+    else:
+        print(output)
+
+
+async def cmd_memory(args):
+    """Monitor memory usage."""
+    from .memory_monitor import MemoryMonitor
+
+    monitor = MemoryMonitor(warn_threshold_mb=args.warn, critical_threshold_mb=args.critical)
+    monitor.start()
+    monitor.snapshot("start")
+    print(monitor.report())
+
+
+async def cmd_checkpoints(args):
+    """Manage crawl checkpoints."""
+    from .recovery import CrawlCheckpoint
+    import json
+
+    if args.ckpt_cmd == "list":
+        ckpts = CrawlCheckpoint.list_checkpoints()
+        if not ckpts:
+            print("No checkpoints found in ~/.harvest/checkpoints/")
+            return
+        print(f"{'ID':<20} {'Visited':>8} {'Queue':>8} {'Timestamp'}")
+        print(f"{'─' * 20} {'─' * 8} {'─' * 8} {'─' * 26}")
+        for c in ckpts:
+            print(f"{c['crawl_id']:<20} {c['visited_count']:>8} {c['queue_count']:>8} {c['timestamp']}")
+
+    elif args.ckpt_cmd == "show":
+        ckpt = CrawlCheckpoint(args.id)
+        info = ckpt.get_info()
+        if info:
+            print(json.dumps(info, indent=2))
+        else:
+            print(f"No checkpoint found: {args.id}")
+
+    elif args.ckpt_cmd == "delete":
+        ckpt = CrawlCheckpoint(args.id)
+        if ckpt.exists():
+            ckpt.delete()
+            print(f"✅ Deleted checkpoint: {args.id}")
+        else:
+            print(f"No checkpoint found: {args.id}")
+    else:
+        print("Usage: harvest checkpoints [list|show <id>|delete <id>]")
+
+
 # ── Main dispatcher ──
 
 
@@ -958,6 +1118,10 @@ def main():
         "serve": cmd_serve,
         "config": cmd_config,
         "generate": cmd_generate,
+        "pool": cmd_pool,
+        "shadow": cmd_shadow,
+        "memory": cmd_memory,
+        "checkpoints": cmd_checkpoints,
     }
 
     cmd_fn = dispatch.get(args.command)
