@@ -18,7 +18,7 @@ from harvest.p2p_network import P2PCacheNetwork
 class TestP2PConfig:
     def test_defaults(self) -> None:
         c = P2PConfig()
-        assert c.enabled is True
+        assert c.enabled is False  # Opt-in: disabled by default
         assert c.port == 8765
         assert c.max_peers_to_query == 5
         assert isinstance(c.bootstrap_peers, list)
@@ -48,14 +48,14 @@ class TestP2PNode:
         node = P2PNode()
         assert node.peer_id.startswith("harvest-")
         assert len(node.peers) == 0
-        assert node.config.enabled is True
+        assert node.config.enabled is False  # Opt-in: disabled by default
 
     def test_stats(self) -> None:
         node = P2PNode()
         s = node.stats()
         assert "peer_id" in s
         assert s["connected_peers"] == 0
-        assert s["enabled"] is True
+        assert s["enabled"] is False
 
     def test_sanitize_for_sharing(self) -> None:
         node = P2PNode()
@@ -99,7 +99,7 @@ class TestP2PNode:
 
     @pytest.mark.asyncio
     async def test_start_stop(self) -> None:
-        config = P2PConfig(port=18765, bootstrap_peers=[])
+        config = P2PConfig(port=18765, bootstrap_peers=[], enabled=True)
         node = P2PNode(config)
         await node.start()
         assert node._server is not None
