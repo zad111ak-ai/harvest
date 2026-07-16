@@ -13,6 +13,7 @@ from tenacity import (
 )
 
 from .browser import BrowserSession
+from .browser_pool import BrowserPool
 from .cache import ResponseCache
 from .captcha_solver import CaptchaSolver
 from .proxy_rotator import ProxyRotator
@@ -58,6 +59,8 @@ class Scraper:
         proxy_pool: Optional[list[str]] = None,
         respect_robots: bool = True,
         track_failures: bool = True,
+        use_pool: bool = False,
+        pool_warm_count: int = 3,
     ):
         self.proxy = proxy
         self.headless = headless
@@ -65,6 +68,9 @@ class Scraper:
         self.use_stealth = use_stealth
         self.use_captcha_solver = use_captcha_solver
         self._session: Optional[BrowserSession] = None
+        self._pool: Optional[BrowserPool] = None
+        self.use_pool = use_pool
+        self.pool_warm_count = pool_warm_count
         self.rate_limiter = RateLimiter(
             max_per_minute=rate_limit,
             domain_limits=domain_limits,
@@ -100,7 +106,36 @@ class Scraper:
             )
         return self._session
 
+    async def _get_pool(self) -> BrowserPool:
+        """Get or create the browser pool for this scraper instance."""
+        if self._pool is None:
+            proxy = self.proxy
+            additional_args = {}
+            if self.use_stealth:
+                additional_args.update(self.stealth.get_args())
+
+            self._pool = BrowserPool(
+                warm_count=self.pool_warm_count,
+                proxy=proxy,
+                headless=self.headless,
+                solve_cloudflare=True,
+            )
+            await self._pool.start()
+        return self._pool
+
+    def pool_stats(self) -> dict:
+        """Return pool statistics if pool mode is active, otherwise empty dict."""
+        if self._pool is None:
+            return {"use_pool": self.use_pool, "pool_active": False}
+        stats = self._pool.get_stats()
+        stats["use_pool"] = True
+        stats["pool_active"] = True
+        return stats
+
     async def close(self):
+        if self._pool:
+            await self._pool.stop()
+            self._pool = None
         if self._session:
             await self._session.close()
             self._session = None
@@ -121,60 +156,13 @@ class Scraper:
 
             await self.rate_limiter.acquire(url)
 
-            session = await self._get_session(url)
-
-            if self.use_captcha_solver and hasattr(self, "captcha_solver"):
-                try:
-                    page = session.get_playwright_page()
-                    await self.captcha_solver.solve(page, "#cf-turnstile, #hcaptcha-box")
-                except Exception:
-                    pass
-
-            resp = await session.fetch(
-                url,
-                extraction_type=extraction,
-                main_content_only=(selector is None),
-                css_selector=selector,
-            )
-
-            content = ""
-            title = ""
-            if hasattr(resp, "body"):
-                body = resp.body
-                if isinstance(body, bytes):
-                    content = body.decode("utf-8", errors="replace")
-                elif isinstance(body, str):
-                    content = body
-                try:
-                    pretty = resp.prettify()
-                    if pretty and len(pretty) > len(content):
-                        content = pretty
-                except Exception:
-                    pass
-            elif isinstance(resp, dict):
-                content = resp.get("content", "") or ""
-                content = "\n".join(content) if isinstance(content, list) else str(content)
-            elif isinstance(resp, str):
-                content = resp
-
-            title_match = re.search(r"<title[^>]*>(.*?)</title>", content, re.DOTALL)
-            if title_match:
-                title = title_match.group(1).strip()
-
-            if HAVE_ADAPTIVE and content:
-                try:
-                    capture_record("scrape", f"OK {url[:60]}", True, tool="harvest")
-                except Exception:
-                    pass
-
-            result = {
-                "url": url,
-                "title": title or url,
-                "content": content,
-                "timestamp": datetime.utcnow().isoformat(),
-            }
-            self.cache.set(url, result)
-            return result
+            if self.use_pool:
+                pool = await self._get_pool()
+                async with pool.acquire() as session:
+                    return await self._scrape_with_session(session, url, selector, extraction)
+            else:
+                session = await self._get_session(url)
+                return await self._scrape_with_session(session, url, selector, extraction)
         except Exception as e:
             # Record failure for retry/analysis
             if self.failure_tracker:
@@ -190,6 +178,67 @@ class Scraper:
                 except Exception:
                     pass
             raise
+
+    async def _scrape_with_session(
+        self,
+        session: BrowserSession,
+        url: str,
+        selector: Optional[str] = None,
+        extraction: str = "markdown",
+    ) -> dict:
+        """Core scraping logic that operates on a provided session."""
+        if self.use_captcha_solver and hasattr(self, "captcha_solver"):
+            try:
+                page = session.get_playwright_page()
+                await self.captcha_solver.solve(page, "#cf-turnstile, #hcaptcha-box")
+            except Exception:
+                pass
+
+        resp = await session.fetch(
+            url,
+            extraction_type=extraction,
+            main_content_only=(selector is None),
+            css_selector=selector,
+        )
+
+        content = ""
+        title = ""
+        if hasattr(resp, "body"):
+            body = resp.body
+            if isinstance(body, bytes):
+                content = body.decode("utf-8", errors="replace")
+            elif isinstance(body, str):
+                content = body
+            try:
+                pretty = resp.prettify()
+                if pretty and len(pretty) > len(content):
+                    content = pretty
+            except Exception:
+                pass
+        elif isinstance(resp, dict):
+            content = resp.get("content", "") or ""
+            content = "\n".join(content) if isinstance(content, list) else str(content)
+        elif isinstance(resp, str):
+            content = resp
+
+        title_match = re.search(r"<title[^>]*>(.*?)</title>", content, re.DOTALL)
+        if title_match:
+            title = title_match.group(1).strip()
+
+        if HAVE_ADAPTIVE and content:
+            try:
+                capture_record("scrape", f"OK {url[:60]}", True, tool="harvest")
+            except Exception:
+                pass
+
+        result = {
+            "url": url,
+            "title": title or url,
+            "content": content,
+            "timestamp": datetime.utcnow().isoformat(),
+        }
+        self.cache.set(url, result)
+        return result
 
     async def scrape_many(
         self,
