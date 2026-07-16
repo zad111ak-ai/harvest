@@ -332,6 +332,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_ckpt_del = p_ckpt_sub.add_parser("delete", help="Delete a checkpoint")
     p_ckpt_del.add_argument("id", help="Checkpoint crawl ID")
 
+    p_detect = sub.add_parser("detect-api", help="Discover hidden REST/GraphQL APIs from browser traffic")
+    p_detect.add_argument("url", help="URL to visit and monitor")
+    p_detect.add_argument("--interact", action="store_true", help="Auto-scroll and click elements")
+    p_detect.add_argument("--scroll", type=int, default=5, help="Number of scroll iterations (default: 5)")
+    p_detect.add_argument(
+        "--format", choices=["httpx", "requests", "curl"], default="curl", help="Code output format (default: curl)"
+    )
+    p_detect.add_argument("--export", help="Export results to JSON file")
+    p_detect.add_argument("--proxy", help="Proxy URL for requests")
+    p_detect.add_argument("--no-headless", action="store_true", help="Show browser window")
+
     return parser
 
 
@@ -1091,6 +1102,38 @@ async def cmd_checkpoints(args):
         print("Usage: harvest checkpoints [list|show <id>|delete <id>]")
 
 
+async def cmd_detect_api(args):
+    """Discover hidden APIs from browser traffic."""
+    from .api_detector import APIDetector
+
+    async with APIDetector(
+        proxy=args.proxy,
+        headless=not args.no_headless,
+    ) as detector:
+        await detector.visit(
+            args.url,
+            interact=args.interact,
+            scroll_count=args.scroll,
+        )
+
+        print(detector.summary())
+
+        apis = detector.get_apis()
+        if not apis:
+            print("No API endpoints discovered. Try --interact to trigger more requests.\n")
+            return
+
+        sep = "=" * 60
+        print(f"\n{sep}")
+        print("Generated " + args.format + " code for first endpoint:\n")
+        print(detector.generate_code(apis[0], style=args.format))
+
+        if args.export:
+            data = detector.export(args.export)
+            ep_count = data["total_endpoints"]
+            print(f"\n✅ Exported {ep_count} endpoints to " + args.export)
+
+
 # ── Main dispatcher ──
 
 
@@ -1122,6 +1165,7 @@ def main():
         "shadow": cmd_shadow,
         "memory": cmd_memory,
         "checkpoints": cmd_checkpoints,
+        "detect-api": cmd_detect_api,
     }
 
     cmd_fn = dispatch.get(args.command)

@@ -25,8 +25,9 @@ from .semantic_cache import SemanticCache
 from .structural_diff import StructuralDiff
 from .self_healing import SelfHealingParser
 from .script_generator import ScriptGenerator
+from .api_detector import APIDetector
 
-__version__ = "0.6.2"
+__version__ = "0.7.0"
 
 __all__ = [
     "Scraper",
@@ -50,5 +51,6 @@ __all__ = [
     "StructuralDiff",
     "SelfHealingParser",
     "ScriptGenerator",
+    "APIDetector",
     "__version__",
 ]
