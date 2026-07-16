@@ -1,0 +1,99 @@
+# =============================================================================
+# Harvest Agent — Docker Compose
+# =============================================================================
+# Usage:
+#   docker compose up -d              # production mode
+#   docker compose --profile dev up   # dev mode with full test suite
+#   docker compose up redis           # start only the redis sidecar
+# =============================================================================
+
+services:
+  # ---------------------------------------------------------------------------
+  # Main harvest service
+  # ---------------------------------------------------------------------------
+  harvest:
+    build:
+      context: .
+      target: production        # use the production stage by default
+    container_name: harvest
+    restart: unless-stopped
+    volumes:
+      - harvest-cache:/app/.harvest-cache   # persistent cache across restarts
+      - ./harvest/config.yaml:/app/harvest/config.yaml:ro   # optional config
+    environment:
+      - HARVEST_CACHE_DIR=/app/.harvest-cache
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c", "from harvest.cli import main; print('ok')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    networks:
+      - harvest-net
+    # Limit to WSL2-friendly resource usage (7.7 GB RAM available)
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+          cpus: "2"
+
+  # ---------------------------------------------------------------------------
+  # Dev variant — runs tests instead of the CLI
+  # ---------------------------------------------------------------------------
+  harvest-dev:
+    build:
+      context: .
+      target: dev
+    container_name: harvest-dev
+    profiles: ["dev"]
+    volumes:
+      - .:/app
+    command: ["pytest", "tests/", "-v", "--tb=short", "-x"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import harvest; print('ok')"]
+      interval: 30s
+      timeout: 10s
+      start_period: 15s
+      retries: 3
+    networks:
+      - harvest-net
+
+  # ---------------------------------------------------------------------------
+  # Redis — optional sidecar for future caching / queue features
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: harvest-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - harvest-net
+    profiles: ["redis"]
+
+# ---------------------------------------------------------------------------
+# Named volumes
+# ---------------------------------------------------------------------------
+volumes:
+  harvest-cache:
+    driver: local
+    name: harvest-cache
+  redis-data:
+    driver: local
+    name: harvest-redis-data
+
+# ---------------------------------------------------------------------------
+# Shared network
+# ---------------------------------------------------------------------------
+networks:
+  harvest-net:
+    driver: bridge
+    name: harvest-network
