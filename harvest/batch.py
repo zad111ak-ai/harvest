@@ -127,7 +127,12 @@ class BatchProcessor:
                                 "error": str(e),
                                 "attempts": attempt + 1,
                             }
-            return {"url": url, "status": "error", "error": "Unreachable", "attempts": 0}
+            return {
+                "url": url,
+                "status": "error",
+                "error": "Unreachable",
+                "attempts": 0,
+            }
 
         dash = Dashboard(total=len(urls), description="Batch processing")
         dash.start()

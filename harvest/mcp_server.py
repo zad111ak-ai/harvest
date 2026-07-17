@@ -276,7 +276,11 @@ if _DENSEFORGE_AVAILABLE:
                     "type": "object",
                     "properties": {
                         "query": {"type": "string", "description": "Search query"},
-                        "top_k": {"type": "integer", "description": "Max results (default: 5)", "default": 5},
+                        "top_k": {
+                            "type": "integer",
+                            "description": "Max results (default: 5)",
+                            "default": 5,
+                        },
                     },
                     "required": ["query"],
                 },
@@ -288,8 +292,14 @@ if _DENSEFORGE_AVAILABLE:
                     "type": "object",
                     "properties": {
                         "url": {"type": "string", "description": "Source URL"},
-                        "content": {"type": "string", "description": "Text content to ingest"},
-                        "title": {"type": "string", "description": "Document title (optional)"},
+                        "content": {
+                            "type": "string",
+                            "description": "Text content to ingest",
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "Document title (optional)",
+                        },
                     },
                     "required": ["url", "content"],
                 },
@@ -300,7 +310,10 @@ if _DENSEFORGE_AVAILABLE:
                 inputSchema={
                     "type": "object",
                     "properties": {
-                        "effect": {"type": "string", "description": "The effect to explain"},
+                        "effect": {
+                            "type": "string",
+                            "description": "The effect to explain",
+                        },
                     },
                     "required": ["effect"],
                 },

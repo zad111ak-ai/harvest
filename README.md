@@ -11,6 +11,10 @@
   <a href="https://github.com/zad111ak-ai/harvest/actions"><img src="https://github.com/zad111ak-ai/harvest/workflows/CI/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python" alt="Python 3.10+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
+  <a href="bitcoin:bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j"><img src="https://img.shields.io/badge/BTC-bc1qd8sa7e-FF9900?logo=bitcoin&logoColor=white" alt="BTC"></a>
+  <a href="ethereum:0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3"><img src="https://img.shields.io/badge/ETH-0xD26f0efE-627EEA?logo=ethereum&logoColor=white" alt="ETH"></a>
+  <a href="https://tonkeeper.com"><img src="https://img.shields.io/badge/USDT_%28TON%29-UQ...DP-26A17B?logo=tether&logoColor=white" alt="USDT TON"></a>
+  <a href="https://phantom.app"><img src="https://img.shields.io/badge/SOL-99EtqBV...JK-9945FF?logo=solana&logoColor=white" alt="SOL"></a>
 </p>
 
 ---
@@ -279,10 +283,12 @@ MIT License — use it however you want.
 
 If Harvest saves you time/money, consider buying me a coffee:
 
-- **BTC:** `bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j`
-- **ETH:** `0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3`
-- **USDT (TON):** `UQAoI2i8P9-JeZhvGSUwKnymVyY5cb-1Rg7pdqoWMNena7DP`
-- **SOL:** `99EtqBVTeF5UNp9a1oPi18iVXbXptTG7YQ6JeJvXMUJK`
+<p align="center">
+  <a href="bitcoin:bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j"><img src="https://img.shields.io/badge/BTC-bc1qd8sa7e-FF9900?logo=bitcoin&logoColor=white" alt="BTC"></a>
+  <a href="ethereum:0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3"><img src="https://img.shields.io/badge/ETH-0xD26f0efE-627EEA?logo=ethereum&logoColor=white" alt="ETH"></a>
+  <a href="https://tonkeeper.com"><img src="https://img.shields.io/badge/USDT_%28TON%29-UQ...DP-26A17B?logo=tether&logoColor=white" alt="USDT TON"></a>
+  <a href="https://phantom.app"><img src="https://img.shields.io/badge/SOL-99EtqBV...JK-9945FF?logo=solana&logoColor=white" alt="SOL"></a>
+</p>
 
 ---
 

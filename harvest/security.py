@@ -179,7 +179,12 @@ def sanitize_for_llm(html: str) -> str:
     html = re.sub(r"<!--.*?-->", "", html, flags=re.DOTALL)
 
     # 2. Remove meta refresh (redirects)
-    html = re.sub(r'<meta[^>]*http-equiv\s*=\s*["\']?refresh["\']?[^>]*>', "", html, flags=re.IGNORECASE)
+    html = re.sub(
+        r'<meta[^>]*http-equiv\s*=\s*["\']?refresh["\']?[^>]*>',
+        "",
+        html,
+        flags=re.IGNORECASE,
+    )
 
     # 3. Remove hidden elements
     html = re.sub(

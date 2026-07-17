@@ -155,7 +155,11 @@ async def cmd_pool(args):
 async def cmd_shadow(args):
     """Extract Shadow DOM content."""
     from ..browser import BrowserSession
-    from ..shadow_dom import flatten_shadow_dom, extract_shadow_dom_structured, has_shadow_dom
+    from ..shadow_dom import (
+        flatten_shadow_dom,
+        extract_shadow_dom_structured,
+        has_shadow_dom,
+    )
 
     async with BrowserSession(proxy=args.proxy) as session:
         await session.fetch(args.url, extraction_type="html")
@@ -174,7 +178,13 @@ async def cmd_shadow(args):
     if args.output == "json":
         print(
             json.dumps(
-                {"url": args.url, "has_shadow_dom": has_shadow, "content": output[:5000]}, indent=2, ensure_ascii=False
+                {
+                    "url": args.url,
+                    "has_shadow_dom": has_shadow,
+                    "content": output[:5000],
+                },
+                indent=2,
+                ensure_ascii=False,
             )
         )
     else:

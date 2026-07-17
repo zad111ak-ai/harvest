@@ -267,7 +267,10 @@ async def cmd_diff(args):
             }
         else:
             differ.capture(new_html, url=args.url)
-            result = {"url": args.url, "message": "First snapshot captured. Run again to see diff."}
+            result = {
+                "url": args.url,
+                "message": "First snapshot captured. Run again to see diff.",
+            }
 
     print(json.dumps(result, indent=2, ensure_ascii=False))
 

@@ -20,7 +20,12 @@ import time
 from typing import Any, Dict, Optional
 
 from harvest.cache import ResponseCache
-from harvest.p2p.node import P2PNode, P2PConfig, compute_content_hash, verify_content_hash
+from harvest.p2p.node import (
+    P2PNode,
+    P2PConfig,
+    compute_content_hash,
+    verify_content_hash,
+)
 from harvest.p2p.error_handler import P2PErrorHandler
 
 logger = logging.getLogger("harvest.p2p_cache")

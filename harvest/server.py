@@ -58,7 +58,13 @@ def create_app(config: Optional[Config] = None):
     @app.middleware("http")
     async def auth_middleware(request: Request, call_next):
         # Skip auth for health check and docs
-        if request.url.path in ("/health", "/stats", "/docs", "/redoc", "/openapi.json"):
+        if request.url.path in (
+            "/health",
+            "/stats",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+        ):
             return await call_next(request)
 
         # If no token configured, allow all (backward compat)

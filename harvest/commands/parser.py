@@ -91,7 +91,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_crawl.add_argument("--delay", type=float, default=0.5, help="Delay between requests (seconds)")
     p_crawl.add_argument("--sitemap-only", action="store_true", help="Only fetch pages from sitemap")
     p_crawl.add_argument("--export", help="Export results to CSV file")
-    p_crawl.add_argument("--checkpoint", help="Checkpoint ID for crash recovery (auto-saves every 10 URLs)")
+    p_crawl.add_argument(
+        "--checkpoint",
+        help="Checkpoint ID for crash recovery (auto-saves every 10 URLs)",
+    )
     p_crawl.add_argument("--resume", help="Resume from checkpoint ID after crash")
 
     # ── search ──
@@ -275,19 +278,33 @@ def build_parser() -> argparse.ArgumentParser:
 
     # ── pool ── Browser pool management ──
     p_pool = sub.add_parser("pool", help="Pre-warm browser pool for instant scraping")
-    p_pool.add_argument("--warm", type=int, default=3, help="Number of browsers to pre-warm (default: 3)")
+    p_pool.add_argument(
+        "--warm",
+        type=int,
+        default=3,
+        help="Number of browsers to pre-warm (default: 3)",
+    )
     p_pool.add_argument("--stats", action="store_true", help="Show pool statistics")
 
     # ── shadow ── Shadow DOM extraction ──
     p_shadow = sub.add_parser("shadow", help="Extract content from Shadow DOM elements")
     p_shadow.add_argument("url", help="Page URL")
-    p_shadow.add_argument("--structured", action="store_true", help="Return structured JSON (not flattened text)")
+    p_shadow.add_argument(
+        "--structured",
+        action="store_true",
+        help="Return structured JSON (not flattened text)",
+    )
     p_shadow.add_argument("--output", "-o", choices=["json", "txt"], default="txt", help="Output format")
 
     # ── memory ── Memory monitoring ──
     p_memory = sub.add_parser("memory", help="Monitor memory usage during operations")
     p_memory.add_argument("--warn", type=float, default=500, help="Warning threshold in MB (default: 500)")
-    p_memory.add_argument("--critical", type=float, default=1024, help="Critical threshold in MB (default: 1024)")
+    p_memory.add_argument(
+        "--critical",
+        type=float,
+        default=1024,
+        help="Critical threshold in MB (default: 1024)",
+    )
 
     # ── checkpoints ── Crash recovery management ──
     p_ckpt = sub.add_parser("checkpoints", help="Manage crawl checkpoints for crash recovery")
@@ -303,7 +320,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_detect.add_argument("--interact", action="store_true", help="Auto-scroll and click elements")
     p_detect.add_argument("--scroll", type=int, default=5, help="Number of scroll iterations (default: 5)")
     p_detect.add_argument(
-        "--format", choices=["httpx", "requests", "curl"], default="curl", help="Code output format (default: curl)"
+        "--format",
+        choices=["httpx", "requests", "curl"],
+        default="curl",
+        help="Code output format (default: curl)",
     )
     p_detect.add_argument("--export", help="Export results to JSON file")
     p_detect.add_argument("--proxy", help="Proxy URL for requests")

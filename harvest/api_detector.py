@@ -162,7 +162,14 @@ class RequestClassifier:
     }
 
     @classmethod
-    def classify(cls, url: str, method: str, headers: dict, post_data: Optional[str], resource_type: str) -> APIRequest:
+    def classify(
+        cls,
+        url: str,
+        method: str,
+        headers: dict,
+        post_data: Optional[str],
+        resource_type: str,
+    ) -> APIRequest:
         """Classify a single request."""
         parsed = urlparse(url)
         query = parse_qs(parsed.query, keep_blank_values=True)
@@ -192,7 +199,12 @@ class RequestClassifier:
 
     @classmethod
     def _detect_api_type(
-        cls, url: str, method: str, headers: dict, post_data: Optional[str], resource_type: str
+        cls,
+        url: str,
+        method: str,
+        headers: dict,
+        post_data: Optional[str],
+        resource_type: str,
     ) -> str:
         # Skip static resources
         if resource_type in ("image", "stylesheet", "font", "media", "manifest"):
