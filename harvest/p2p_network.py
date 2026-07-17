@@ -199,7 +199,15 @@ class P2PCacheNetwork:
         return hashlib.sha256(raw.encode()).hexdigest()
 
     def _verify_entry(self, entry: dict) -> bool:
-        """Verify a P2P entry is sane."""
+        """Verify a P2P entry is sane.
+
+        Security checks:
+        - Entry has required fields (data, timestamp)
+        - Not too old (7 days max)
+        - Not too large (500 KB max)
+        - No dangerous content (XSS, script injection)
+        - Data is valid JSON-serializable
+        """
         if not entry or "data" not in entry:
             return False
 
@@ -210,8 +218,32 @@ class P2PCacheNetwork:
 
         # Not too large
         try:
-            if len(json.dumps(entry.get("data", {})).encode()) > _MAX_DATA_SIZE:
+            data = entry.get("data", {})
+            data_str = json.dumps(data).encode()
+            if len(data_str) > _MAX_DATA_SIZE:
                 return False
+        except (TypeError, ValueError):
+            return False
+
+        # SECURITY: Check for dangerous content (XSS/script injection)
+        try:
+            data_str_lower = json.dumps(data).lower()
+            dangerous_patterns = [
+                "<script",
+                "javascript:",
+                "onerror=",
+                "onload=",
+                "eval(",
+                "exec(",
+                "document.cookie",
+                "<iframe",
+                "<object",
+                "<embed",
+            ]
+            for pattern in dangerous_patterns:
+                if pattern in data_str_lower:
+                    logger.warning(f"P2P: Blocked entry with dangerous content: {pattern}")
+                    return False
         except (TypeError, ValueError):
             return False
 

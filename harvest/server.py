@@ -30,13 +30,17 @@ def create_app(config: Optional[Config] = None):
     Usage:
         from harvest.server import create_app
         app = create_app()
-        # uvicorn.run(app, host="0.0.0.0", port=8590)
+        # uvicorn.run(app, host="127.0.0.1", port=8590)
 
     Or via CLI:
         harvest serve
     """
     from fastapi import FastAPI, Query, HTTPException
+    from fastapi.responses import JSONResponse
+    from fastapi.requests import Request
     from pydantic import BaseModel
+    import os
+    import hmac as _hmac
 
     cfg = config or Config()
 
@@ -47,6 +51,40 @@ def create_app(config: Optional[Config] = None):
         docs_url="/docs",
         redoc_url="/redoc",
     )
+
+    # SECURITY: Optional bearer token auth (set HARVEST_API_TOKEN env var)
+    _api_token = os.environ.get("HARVEST_API_TOKEN", "")
+
+    @app.middleware("http")
+    async def auth_middleware(request: Request, call_next):
+        # Skip auth for health check and docs
+        if request.url.path in ("/health", "/stats", "/docs", "/redoc", "/openapi.json"):
+            return await call_next(request)
+
+        # If no token configured, allow all (backward compat)
+        if not _api_token:
+            return await call_next(request)
+
+        # Check Authorization header
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            provided = auth_header[7:]
+        else:
+            provided = ""
+
+        if not provided or not _hmac.compare_digest(provided, _api_token):
+            return JSONResponse(
+                status_code=401,
+                content={"error": "Invalid or missing API token. Set HARVEST_API_TOKEN."},
+            )
+
+        return await call_next(request)
+
+    # SECURITY: Log auth status
+    if _api_token:
+        print("🔒 Harvest API: Auth ENABLED (HARVEST_API_TOKEN set)")
+    else:
+        print("⚠️  Harvest API: Auth DISABLED (set HARVEST_API_TOKEN for production)")
 
     # Add MCP tools
     add_mcp_tools(app)
@@ -185,7 +223,7 @@ def create_app(config: Optional[Config] = None):
     return app
 
 
-def run_server(config: Optional[Config] = None, host: str = "0.0.0.0", port: int = 8590):
+def run_server(config: Optional[Config] = None, host: str = "127.0.0.1", port: int = 8590):
     """Run the Harvest API server."""
     import uvicorn
 

@@ -21,6 +21,7 @@ from .rate_limiter import RateLimiter
 from .stealth import Stealth
 from .failures import FailureTracker
 from .robots import RobotsChecker
+from .security import safe_url, strip_credentials
 
 # Optional AdaptiveCore integration
 try:
@@ -146,6 +147,12 @@ class Scraper:
         selector: Optional[str] = None,
         extraction: str = "markdown",
     ) -> dict:
+        # SECURITY: Validate URL (SSRF + LFI prevention)
+        safe_url(url)
+
+        # SECURITY: Strip credentials from URL
+        url = strip_credentials(url)
+
         # Check robots.txt
         if self.robots and not await self.robots.can_fetch(url):
             raise PermissionError(f"Blocked by robots.txt: {url}")
