@@ -159,7 +159,7 @@ def create_app(config: Optional[Config] = None):
             result = await scraper.scrape(url, selector=selector)
             return result
         except Exception as e:
-            raise HTTPException(status_code=502, detail=str(e))
+            raise HTTPException(status_code=502, detail=str(e)) from e
 
     @app.post("/extract")
     async def extract(request: ExtractRequest):
@@ -169,7 +169,7 @@ def create_app(config: Optional[Config] = None):
             result = await extractor.extract(request.url, request.schema)
             return result
         except Exception as e:
-            raise HTTPException(status_code=502, detail=str(e))
+            raise HTTPException(status_code=502, detail=str(e)) from e
 
     @app.post("/crawl")
     async def crawl(request: CrawlRequest):

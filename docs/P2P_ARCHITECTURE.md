@@ -6,107 +6,198 @@ Harvest P2P is a **decentralized cache-sharing network** for web data. Think Bit
 
 **The problem it solves:** Individual scrapers have limited reach. One person can't scrape everything. But a network of 100 people each scraping different sources creates a collective intelligence that outperforms any single cloud API.
 
-## How It Works
+## Network Topology
 
-### Network Topology
+```mermaid
+graph TB
+    subgraph "Harvest P2P Network"
+        A["Node A<br/>(you)"] <-->|"WebSocket"| B["Node B<br/>(friend)"]
+        B <-->|"WebSocket"| C["Node C<br/>(community)"]
+        A <-->|"WebSocket"| C
+    end
 
-```
-┌─────────────────────────────────────────────────┐
-│              Harvest P2P Network                 │
-│                                                  │
-│  ┌────────┐    ┌────────┐    ┌────────┐         │
-│  │ Node A │◄──►│ Node B │◄──►│ Node C │  Peers  │
-│  │ (you)  │    │ (friend)│    │ (community)│     │
-│  └───┬────┘    └───┬────┘    └───┬────┘         │
-│      │             │             │               │
-│      ▼             ▼             ▼               │
-│  ┌──────────────────────────────────────┐        │
-│  │         Shared Cache Layer           │        │
-│  │  ┌─────────┐  ┌─────────┐           │        │
-│  │  │ Local   │  │ Network │           │        │
-│  │  │ Cache   │◄►│ Cache   │           │        │
-│  │  └─────────┘  └─────────┘           │        │
-│  │  TTL · SHA-256 · Selective sharing   │        │
-│  └──────────────────────────────────────┘        │
-└─────────────────────────────────────────────────┘
-```
+    subgraph "Shared Cache Layer"
+        LA["Local Cache A"]
+        LB["Local Cache B"]
+        LC["Local Cache C"]
+        LA <-->|"gossip"| LB
+        LB <-->|"gossip"| LC
+    end
 
-### Request Flow
+    A --> LA
+    B --> LB
+    C --> LC
 
-```
-1. You request: example.com/data
-2. Check local cache → HIT? Return cached version
-3. Query P2P network → Any peer has it?
-   → HIT: Get from peer (fast, 0ms scraping)
-   → MISS: Scrape it yourself
-4. Share result with network → Others benefit
-5. TTL expires → Fresh data scraped when needed
+    BS["Bootstrap Server"] -.->|"discovery"| A
+    BS -.->|"discovery"| B
 ```
 
-### Protocol
+## Request Flow
 
-Harvest P2P uses WebSocket connections with a simple JSON message protocol:
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant Node as Your Node
+    participant Cache as Local Cache
+    participant Peer as P2P Network
 
+    App->>Node: get_p2p(url, prompt)
+    Node->>Cache: check local cache
+
+    alt Cache HIT
+        Cache-->>Node: return cached data
+        Node-->>App: data (fast)
+    else Cache MISS
+        Node->>Peer: cache_lookup (WebSocket)
+
+        alt Peer HIT
+            Peer-->>Node: cache_response + content_hash
+            Node->>Node: verify_content_hash()
+            Node->>Cache: store locally
+            Node-->>App: data (from peer)
+        else Peer MISS
+            Peer-->>Node: null
+            Node-->>App: None (scrape yourself)
+        end
+    end
 ```
-Node A → Node B:
-{
-  "type": "cache_lookup",
-  "key": "sha256(example.com/data)",
-  "ttl_remaining": 3600
-}
 
-Node B → Node A:
-{
-  "type": "cache_response",
-  "key": "sha256(example.com/data)",
-  "content": "...",
-  "metadata": {"scraped_at": "2024-01-15T10:30:00Z"},
-  "source": "node_b"
-}
+## Data Flow — Cache Broadcast
+
+```mermaid
+sequenceDiagram
+    participant App as Application
+    participant Node as Your Node
+    participant Cache as Local Cache
+    participant Peers as P2P Network
+
+    App->>Node: scrape + store result
+    Node->>Cache: set(key, data)
+    Node->>Node: compute_content_hash(data)
+    Node->>Peers: broadcast(entry)
+
+    loop Gossip to random subset
+        Peers->>Peers: verify content_hash
+        Peers->>Peers: store if valid
+    end
 ```
 
-### Key Features
+## Content Hash Verification
 
-| Feature | Description |
-|---------|-------------|
-| **Gossip Protocol** | Nodes share cache metadata with neighbors |
-| **TTL-based Expiration** | Cached data expires automatically |
-| **Content Hashing** | SHA-256 deduplication across network |
-| **Selective Sharing** | Choose what to share (privacy control) |
-| **Peer Discovery** | Bootstrap servers + gossip for new nodes |
-| **Error Handling** | Graceful degradation, auto-retry |
-| **Persistence** | Peer list saved to disk, survives restarts |
+```mermaid
+flowchart LR
+    A["Entry Data"] --> B["JSON serialize<br/>(sort_keys=True)"]
+    B --> C["SHA-256 hash"]
+    C --> D["content_hash field"]
+
+    E["Received Entry"] --> F{"content_hash<br/>present?"}
+    F -->|No| G["Legacy entry<br/>→ PASS"]
+    F -->|Yes| H["Recompute hash<br/>from entry.data"]
+    H --> I{"Hashes<br/>match?"}
+    I -->|Yes| J["✅ PASS — integrity OK"]
+    I -->|No| K["❌ REJECT — tampered"]
+```
+
+## Peer Reputation System
+
+```mermaid
+flowchart TD
+    A["Peer Request"] --> B{"Success?"}
+    B -->|Yes| C["successes += 1"]
+    B -->|No| D["failures += 1"]
+
+    C --> E["Update reputation"]
+    D --> E
+
+    E --> F["reputation = success_rate - latency_penalty"]
+    F --> G{"reputation >= 0.1?"}
+    G -->|Yes| H["Use new value"]
+    G -->|No| I["Set floor = 0.1"]
+
+    H --> J["Peer Selection"]
+    I --> J
+
+    J --> K["Sort by reputation desc"]
+    K --> L["Query top-N peers"]
+```
+
+## Gossip Protocol
+
+```mermaid
+flowchart TD
+    A["_gossip_loop<br/>(every 30s)"] --> B{"Recent entries?"}
+    B -->|No| C["Skip gossip"]
+    B -->|Yes| D["Select 3 random peers"]
+
+    D --> E["For each peer"]
+    E --> F["Send last 5 entries"]
+    F --> G{"Success?"}
+    G -->|Yes| H["Entry delivered"]
+    G -->|No| I["Skip peer"]
+
+    A --> J["Prune stale peers"]
+    J --> K{"last_seen > 10min?"}
+    K -->|Yes| L["Remove from peers"]
+    K -->|No| M["Keep peer"]
+```
+
+## Protocol Messages
+
+| Message | Direction | Payload | Purpose |
+|---------|-----------|---------|---------|
+| `hello` | Client→Server | `{peer_id, address}` | Initial handshake |
+| `hello_ack` | Server→Client | `{peer_id, address, known_peers[]}` | Accept + share peers |
+| `cache_lookup` | Client→Server | `{key}` | Request cache entry |
+| `cache_response` | Server→Client | `{key, data, peer_id}` | Return cached data |
+| `cache_update` | Broadcast | `{entry, source}` | Share new entry |
+| `ping` | Either | `{}` | Keep-alive |
+| `pong` | Either | `{}` | Keep-alive response |
+
+## Security Layers
+
+```mermaid
+flowchart TD
+    A["Incoming Entry"] --> B["Layer 1: Content Hash"]
+    B --> C{"SHA-256 match?"}
+    C -->|No| X["❌ REJECT"]
+    C -->|Yes| D["Layer 2: Field Validation"]
+    D --> E{"data, timestamp present?"}
+    E -->|No| X
+    E -->|Yes| F["Layer 3: Size Check"]
+    F --> G{"< 500KB?"}
+    G -->|No| X
+    G -->|Yes| H["Layer 4: Age Check"]
+    H --> I{"< 7 days old?"}
+    I -->|No| X
+    I -->|Yes| J["Layer 5: XSS/Injection"]
+    J --> K{"dangerous patterns?"}
+    K -->|Yes| X
+    K -->|No| L["✅ ACCEPT — store locally"]
+```
 
 ## Use Cases
 
-### 1. Community Data Pool
-```
-100 developers scrape different crypto sites:
-- Node A: Binance API
-- Node B: CoinGecko
-- Node C: DeFi protocols
-- ...
+### Community Data Pool
 
-Result: Everyone has complete market data
-        without hitting any single API
-```
-
-### 2. Research Collaboration
-```
-Team of researchers:
-- Scrape academic papers
-- Share findings via P2P
-- Each person benefits from others' work
-- No central server needed
+```mermaid
+graph LR
+    A["100 developers"] --> B["Scrape different sites"]
+    B --> C["Binance API"]
+    B --> D["CoinGecko"]
+    B --> E["DeFi protocols"]
+    C --> F["Shared Cache"]
+    D --> F
+    E --> F
+    F --> G["Everyone has<br/>complete data"]
 ```
 
-### 3. Competitive Intelligence
-```
-Company monitoring competitors:
-- Multiple departments scrape different sources
-- P2P shares cache across departments
-- Avoid duplicate scraping
-- Fresh data for everyone
+### Research Collaboration
+
+```mermaid
+graph LR
+    A["Team of researchers"] --> B["Scrape papers"]
+    B --> C["Share via P2P"]
+    C --> D["Each benefits<br/>from others' work"]
 ```
 
 ## Configuration
@@ -138,35 +229,30 @@ await node.start()
 
 ## Roadmap
 
-- [ ] v0.9: DHT for distributed hash table
-- [ ] v1.0: NAT traversal (hole punching)
-- [ ] v1.1: Encryption at rest
-- [ ] v1.2: Reputation system
-- [ ] v1.3: Mobile node support
-
-## Technical Details
-
-### Cache Key Format
-```
-sha256(url + sort(params)) → 64-char hex string
+```mermaid
+timeline
+    title P2P Development Roadmap
+    Phase 0 : Basic P2P node + gossip ✅
+    Phase 1 : Content hash + reputation ✅
+    Phase 2 : DHT (distributed hash table) 🔜
+    Phase 3 : NAT traversal (hole punching) 📋
+    Phase 4 : End-to-end encryption 📋
+    Phase 5 : Mobile node support 📋
 ```
 
-### Message Types
-| Type | Direction | Purpose |
-|------|-----------|---------|
-| `hello` | Both | Initial handshake |
-| `cache_lookup` | Request | Find cached data |
-| `cache_response` | Response | Return cached data |
-| `cache_update` | Broadcast | Share new data |
-| `peer_list` | Response | Share known peers |
-| `heartbeat` | Both | Keep connection alive |
+## File Structure
 
-### Peer Selection
-Nodes are scored by:
-1. **Reliability** — uptime percentage
-2. **Freshness** — how recent their data is
-3. **Latency** — response time
-4. **Storage** — how much they share
+```
+harvest/p2p/
+├── __init__.py          # Module exports
+├── node.py              # P2PNode, PeerInfo, P2PConfig
+├── error_handler.py     # Error tracking + auto-disable
+└── bootstrap_server.py  # Bootstrap/discovery logic
+
+harvest/
+├── p2p_network.py       # P2PCacheNetwork (high-level API)
+└── cache.py             # ResponseCache (local cache)
+```
 
 ## Contributing
 
