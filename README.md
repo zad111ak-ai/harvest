@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python" alt="Python 3.10+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <a href="https://github.com/sponsors/zad111ak-ai"><img src="https://img.shields.io/badge/💰_Sponsor-GitHub-ea4aaa" alt="Sponsor"></a>
+  <a href="https://ko-fi.com/zad111ak"><img src="https://img.shields.io/badge/☕_Ko--fi-FF5E5B?logo=ko-fi" alt="Ko-fi"></a>
 </p>
 
 ---
@@ -185,6 +186,7 @@ If Harvest saves you time or money, consider supporting development:
 
 <p align="center">
   <a href="https://github.com/sponsors/zad111ak-ai"><img src="https://img.shields.io/badge/⭐_GitHub_Sponsors-ea4aaa?style=for-the-badge&logo=github" alt="GitHub Sponsors"></a>
+  <a href="https://ko-fi.com/zad111ak"><img src="https://img.shields.io/badge/☕_Ko--fi-FF5E5B?style=for-the-badge&logo=ko-fi" alt="Ko-fi"></a>
 </p>
 
 ### 🪙 Crypto Donations
