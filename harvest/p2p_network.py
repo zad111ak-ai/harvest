@@ -20,7 +20,7 @@ import time
 from typing import Any, Dict, Optional
 
 from harvest.cache import ResponseCache
-from harvest.p2p.node import P2PNode, P2PConfig
+from harvest.p2p.node import P2PNode, P2PConfig, compute_content_hash, verify_content_hash
 from harvest.p2p.error_handler import P2PErrorHandler
 
 logger = logging.getLogger("harvest.p2p_cache")
@@ -138,7 +138,7 @@ class P2PCacheNetwork:
         key = self._make_key(url, prompt)
         self.local_cache.set(key, data)
 
-        # Build shareable entry (privacy-sanitized)
+        # Build shareable entry (privacy-sanitized + integrity hash)
         entry = self.node.sanitize_for_sharing(
             {
                 "key": key,
@@ -147,6 +147,7 @@ class P2PCacheNetwork:
                 "timestamp": time.time(),
             }
         )
+        entry["content_hash"] = compute_content_hash(entry.get("data", {}))
         self._key_index[key] = entry
 
         # Broadcast
@@ -203,12 +204,18 @@ class P2PCacheNetwork:
 
         Security checks:
         - Entry has required fields (data, timestamp)
+        - Content hash integrity (SHA-256)
         - Not too old (7 days max)
         - Not too large (500 KB max)
         - No dangerous content (XSS, script injection)
         - Data is valid JSON-serializable
         """
         if not entry or "data" not in entry:
+            return False
+
+        # Content hash integrity
+        if not verify_content_hash(entry):
+            logger.warning("P2P: Entry failed content hash verification")
             return False
 
         # Not too old

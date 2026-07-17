@@ -214,3 +214,101 @@ class TestP2PCacheNetwork:
         net = P2PCacheNetwork(cache, config)
         result = await net.get_p2p("https://example.com", "test")
         assert result is None  # No peers, no P2P, just local miss
+
+
+# ── Phase 1: Content Hash Verification ────────────────────────
+
+
+class TestContentHash:
+    def test_compute_content_hash(self) -> None:
+        from harvest.p2p.node import compute_content_hash
+
+        h = compute_content_hash({"price": 42})
+        assert len(h) == 64  # SHA-256 hex
+        assert isinstance(h, str)
+
+    def test_deterministic(self) -> None:
+        from harvest.p2p.node import compute_content_hash
+
+        assert compute_content_hash({"a": 1}) == compute_content_hash({"a": 1})
+        assert compute_content_hash({"a": 1}) != compute_content_hash({"a": 2})
+
+    def test_verify_content_hash_valid(self) -> None:
+        from harvest.p2p.node import compute_content_hash, verify_content_hash
+
+        data = {"price": 42}
+        entry = {"data": data, "content_hash": compute_content_hash(data)}
+        assert verify_content_hash(entry) is True
+
+    def test_verify_content_hash_tampered(self) -> None:
+        from harvest.p2p.node import compute_content_hash, verify_content_hash
+
+        data = {"price": 42}
+        entry = {"data": data, "content_hash": compute_content_hash({"price": 99})}
+        assert verify_content_hash(entry) is False
+
+    def test_verify_content_hash_legacy(self) -> None:
+        from harvest.p2p.node import verify_content_hash
+
+        assert verify_content_hash({"data": {"x": 1}}) is True  # no hash = pass
+        assert verify_content_hash({}) is True
+
+
+# ── Phase 1: Peer Reputation ──────────────────────────────────
+
+
+class TestPeerReputation:
+    def test_initial_reputation(self) -> None:
+        p = PeerInfo(peer_id="t", address="ws://x:1")
+        assert p.reputation == 0.5
+        assert p.score == 0.5
+        assert p.successes == 0
+        assert p.failures == 0
+
+    def test_success_improves(self) -> None:
+        p = PeerInfo(peer_id="t", address="ws://x:1")
+        p.update_reputation(True, latency_ms=50)
+        assert p.successes == 1
+        assert p.reputation > 0.5
+
+    def test_failure_degrades(self) -> None:
+        p = PeerInfo(peer_id="t", address="ws://x:1")
+        p.update_reputation(False)
+        assert p.failures == 1
+        assert p.reputation < 0.5
+
+    def test_reputation_accumulates(self) -> None:
+        p = PeerInfo(peer_id="t", address="ws://x:1")
+        for _ in range(10):
+            p.update_reputation(True, latency_ms=50)
+        for _ in range(3):
+            p.update_reputation(False)
+        assert p.successes == 10
+        assert p.failures == 3
+        assert 0.5 < p.reputation < 1.0
+
+    def test_reputation_floor(self) -> None:
+        p = PeerInfo(peer_id="t", address="ws://x:1")
+        for _ in range(100):
+            p.update_reputation(False)
+        assert p.reputation >= 0.1  # minimum floor
+
+
+# ── Phase 1: Enhanced Stats ───────────────────────────────────
+
+
+class TestP2PNodeStats:
+    def test_stats_includes_reputation(self) -> None:
+        node = P2PNode()
+        node.peers["p1"] = PeerInfo(peer_id="p1", address="ws://x:1")
+        node.peers["p1"].update_reputation(True, latency_ms=100)
+        s = node.stats()
+        assert "peer_reputations" in s
+        assert "p1" in s["peer_reputations"]
+        assert s["peer_reputations"]["p1"] == round(node.peers["p1"].reputation, 2)
+
+    def test_stats_includes_recent_entries(self) -> None:
+        node = P2PNode()
+        s = node.stats()
+        assert "recent_entries" in s
+        assert s["recent_entries"] == 0

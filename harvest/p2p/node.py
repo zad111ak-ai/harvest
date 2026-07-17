@@ -24,6 +24,27 @@ from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger("harvest.p2p")
 
+
+# ---------------------------------------------------------------------------
+# Content Hash Verification
+# ---------------------------------------------------------------------------
+
+
+def compute_content_hash(data: dict) -> str:
+    """SHA-256 of JSON-serialized data for integrity checking."""
+    raw = json.dumps(data, sort_keys=True).encode()
+    return hashlib.sha256(raw).hexdigest()
+
+
+def verify_content_hash(entry: dict) -> bool:
+    """Verify entry integrity via content hash."""
+    expected = entry.get("content_hash")
+    if not expected:
+        return True  # Legacy entries without hash
+    actual = compute_content_hash(entry.get("data", {}))
+    return actual == expected
+
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -62,18 +83,42 @@ class P2PConfig:
 
 
 # ---------------------------------------------------------------------------
-# Peer info
+# Peer info with reputation tracking
 # ---------------------------------------------------------------------------
 
 
 @dataclass
 class PeerInfo:
-    """Known peer metadata."""
+    """Known peer metadata with reputation tracking."""
 
     peer_id: str
     address: str  # ws://host:port
     last_seen: float = 0.0
     reputation: float = 0.5
+    # Reputation tracking
+    successes: int = 0
+    failures: int = 0
+    total_latency_ms: float = 0.0
+
+    def update_reputation(self, success: bool, latency_ms: float = 0.0) -> None:
+        """Update reputation after a request."""
+        if success:
+            self.successes += 1
+            self.total_latency_ms += latency_ms
+        else:
+            self.failures += 1
+        # Recalculate score
+        total = self.successes + self.failures
+        if total > 0:
+            success_rate = self.successes / total
+            avg_latency = self.total_latency_ms / max(self.successes, 1)
+            latency_penalty = min(avg_latency / 5000, 0.3)
+            self.reputation = max(0.1, success_rate - latency_penalty)
+
+    @property
+    def score(self) -> float:
+        """Current reputation score."""
+        return self.reputation
 
 
 # ---------------------------------------------------------------------------
@@ -110,6 +155,8 @@ class P2PNode:
     - Gossip broadcast (push new cache entries to random subset)
     - Persistent peer storage (survives restarts)
     - Port auto-selection (tries 8765-8774)
+    - Content hash verification (SHA-256 integrity)
+    - Peer reputation tracking (success rate + latency)
     """
 
     def __init__(self, config: Optional[P2PConfig] = None) -> None:
@@ -132,6 +179,9 @@ class P2PNode:
         self.lookups_received = 0
         self.updates_received = 0
 
+        # Gossip: recent entries for proactive sharing
+        self._recent_entries: List[dict] = []
+
     # ------------------------------------------------------------------
     # Lifecycle
     # ------------------------------------------------------------------
@@ -148,7 +198,6 @@ class P2PNode:
         # Start WebSocket server with port fallback
         for port in range(self.config.port, self.config.port + 10):
             try:
-                # websockets library import
                 import websockets  # noqa: F811
 
                 self._server = await websockets.serve(
@@ -284,8 +333,15 @@ class P2PNode:
         )
 
     async def _on_cache_update(self, data: dict) -> None:
-        """Process incoming gossip cache update."""
+        """Process incoming gossip cache update with integrity check."""
         self.updates_received += 1
+
+        # Verify content hash if present
+        entry = data.get("entry", data)
+        if not verify_content_hash(entry):
+            logger.warning("P2P: Rejected entry with invalid content hash")
+            return
+
         handler = self._handlers.get("cache_update")
         if handler:
             try:
@@ -359,6 +415,7 @@ class P2PNode:
 
     async def _ask_peer(self, peer: PeerInfo, key: str) -> Optional[dict]:
         """Ask a single peer for a cache entry."""
+        start = time.monotonic()
         try:
             import websockets  # noqa: F811
 
@@ -370,9 +427,14 @@ class P2PNode:
                 )
                 resp = json.loads(str(raw))
                 if resp.get("type") == MSG_CACHE_RESPONSE:
-                    return resp.get("data")
-        except Exception:
-            pass
+                    data = resp.get("data")
+                    latency_ms = (time.monotonic() - start) * 1000
+                    peer.update_reputation(True, latency_ms)
+                    return data
+        except Exception as e:
+            latency_ms = (time.monotonic() - start) * 1000
+            peer.update_reputation(False, latency_ms)
+            logger.debug(f"Ask peer {peer.peer_id} failed: {e}")
         return None
 
     # ------------------------------------------------------------------
@@ -401,10 +463,19 @@ class P2PNode:
         return None
 
     async def broadcast(self, entry: dict) -> None:
-        """Gossip a cache entry to a random subset of peers."""
+        """Gossip a cache entry with content hash verification."""
         peers = list(self.peers.values())
         if not peers:
             return
+
+        # Add content hash if not present
+        if "content_hash" not in entry and "data" in entry:
+            entry["content_hash"] = compute_content_hash(entry["data"])
+
+        # Track for proactive gossip
+        self._recent_entries.append(entry)
+        if len(self._recent_entries) > 100:
+            self._recent_entries = self._recent_entries[-100:]
 
         subset = random.sample(peers, min(3, len(peers)))
         msg = _make_msg(MSG_CACHE_UPDATE, entry=entry, source=self.peer_id)
@@ -436,11 +507,41 @@ class P2PNode:
                 logger.debug(f"Discovery error: {e}")
 
     async def _gossip_loop(self) -> None:
-        """Placeholder for periodic gossip tasks."""
+        """Proactive cache sharing + stale peer pruning."""
         while self._running:
             await asyncio.sleep(self.config.gossip_interval_sec)
-            # Future: proactive gossip, stale entry cleanup
-            await asyncio.sleep(0)  # yield
+            try:
+                # Proactive gossip: share recent entries with random peers
+                if self._recent_entries:
+                    peers = list(self.peers.values())
+                    if peers:
+                        subset = random.sample(peers, min(3, len(peers)))
+                        for peer in subset:
+                            for entry in self._recent_entries[:5]:
+                                try:
+                                    import websockets  # noqa: F811
+
+                                    async with websockets.connect(peer.address) as ws:
+                                        await ws.send(
+                                            _make_msg(
+                                                MSG_CACHE_UPDATE,
+                                                entry=entry,
+                                                source=self.peer_id,
+                                            )
+                                        )
+                                except Exception:
+                                    pass
+
+                # Prune stale peers (not seen in 10 min)
+                stale = [pid for pid, p in self.peers.items() if time.time() - p.last_seen > 600]
+                for pid in stale:
+                    del self.peers[pid]
+                    logger.debug(f"Pruned stale peer {pid}")
+
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.debug(f"Gossip error: {e}")
 
     async def _save_peers_loop(self) -> None:
         """Persist peers to disk every 5 minutes."""
@@ -464,7 +565,15 @@ class P2PNode:
         """Save known peers to disk."""
         path = self._peers_file()
         path.parent.mkdir(parents=True, exist_ok=True)
-        data = {pid: {"address": p.address, "reputation": p.reputation} for pid, p in self.peers.items()}
+        data = {
+            pid: {
+                "address": p.address,
+                "reputation": p.reputation,
+                "successes": p.successes,
+                "failures": p.failures,
+            }
+            for pid, p in self.peers.items()
+        }
         path.write_text(json.dumps(data, indent=2))
 
     def _load_peers(self) -> None:
@@ -479,6 +588,8 @@ class P2PNode:
                     peer_id=pid,
                     address=info.get("address", ""),
                     reputation=info.get("reputation", 0.5),
+                    successes=info.get("successes", 0),
+                    failures=info.get("failures", 0),
                     last_seen=time.time(),
                 )
         except Exception as e:
@@ -511,7 +622,8 @@ class P2PNode:
     # ------------------------------------------------------------------
 
     def stats(self) -> dict:
-        """Return node statistics."""
+        """Return node statistics with reputation info."""
+        peer_reputations = {pid: round(p.reputation, 2) for pid, p in self.peers.items()}
         return {
             "peer_id": self.peer_id,
             "enabled": self.config.enabled,
@@ -521,4 +633,6 @@ class P2PNode:
             "lookups_served": self.lookups_served,
             "lookups_received": self.lookups_received,
             "updates_received": self.updates_received,
+            "peer_reputations": peer_reputations,
+            "recent_entries": len(self._recent_entries),
         }
