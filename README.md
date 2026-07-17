@@ -11,9 +11,12 @@
   <a href="https://github.com/zad111ak-ai/harvest/actions"><img src="https://github.com/zad111ak-ai/harvest/workflows/CI/badge.svg" alt="CI"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python" alt="Python 3.10+">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
-  <a href="bitcoin:bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j"><img src="https://img.shields.io/badge/BTC-bc1qd8sa7e-FF9900?logo=bitcoin&logoColor=white" alt="BTC"></a>
-  <a href="ethereum:0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3"><img src="https://img.shields.io/badge/ETH-0xD26f0efE-627EEA?logo=ethereum&logoColor=white" alt="ETH"></a>
-  <a href="https://tonkeeper.com"><img src="https://img.shields.io/badge/USDT_%28TON%29-UQ...DP-26A17B?logo=tether&logoColor=white" alt="USDT TON"></a>
+</p>
+
+<p align="center">
+  <a href="bitcoin:bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j"><img src="https://img.shields.io/badge/BTC-bc1qd8sa7e-FF9900?logo=bitcoin&logoColor=white" alt="BTC"></a>&nbsp;
+  <a href="ethereum:0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3"><img src="https://img.shields.io/badge/ETH-0xD26f0efE-627EEA?logo=ethereum&logoColor=white" alt="ETH"></a>&nbsp;
+  <a href="https://tonkeeper.com"><img src="https://img.shields.io/badge/USDT_%28TON%29-UQ...DP-26A17B?logo=tether&logoColor=white" alt="USDT TON"></a>&nbsp;
   <a href="https://phantom.app"><img src="https://img.shields.io/badge/SOL-99EtqBV...JK-9945FF?logo=solana&logoColor=white" alt="SOL"></a>
 </p>
 
@@ -32,225 +35,122 @@ Harvest is a **web scraping toolkit designed for AI agents**. It's not just anot
 | | Traditional Scrapers | Harvest |
 |---|---|---|
 | **Scrape** | ✅ | ✅ |
-| **Store for AI** | ❌ (data dies) | ✅ Semantic memory |
-| **P2P Cache** | ❌ | ✅ Community data sharing |
-| **MCP Integration** | ❌ | ✅ 17 tools |
-| **Privacy** | Cloud APIs | ✅ 100% local |
-| **Cost** | $$$ per request | ✅ $0 forever |
+| **P2P Cache Sharing** | ❌ | ✅ BitTorrent for web data |
+| **Semantic Memory** | ❌ | ✅ DenseForge integration |
+| **MCP Protocol** | ❌ | ✅ Works with any MCP agent |
+| **Agent Integration** | Manual | Automatic |
 
----
+### Key Features
+
+- **🕷️ Smart Scraping** — handles JavaScript, anti-bot, CAPTCHAs
+- **🌐 P2P Network** — share cache with other scrapers (50-90% query savings)
+- **🧠 Semantic Memory** — integrates with DenseForge for persistent agent memory
+- **🔌 MCP Protocol** — 17 tools for AI agents
+- **📊 Analytics** — track scraping success, costs, and performance
 
 ## 🚀 Quick Start
 
 ```bash
-# Install
 pip install harvest-agent
-
-# Scrape a URL
-python -c "
-from harvest import Harvest, CrawlConfig
-h = Harvest(CrawlConfig())
-result = h.scrape('https://example.com')
-print(result.markdown)
-"
 ```
 
-### With MCP (Claude, Cursor, Hermes)
+```python
+from harvest import Harvest, CrawlConfig
 
-```json
+harvest = Harvest()
+
+# Simple scrape
+result = await harvest.scrape("https://example.com")
+
+# Scrape with AI extraction
+data = await harvest.scrape(
+    "https://news.example.com",
+    prompt="Extract all article titles and summaries"
+)
+
+# Start P2P network
+config = CrawlConfig(p2p_enabled=True)
+harvest = Harvest(config)
+await harvest.start()
+```
+
+### MCP Server
+
+```bash
+# Add to your MCP agent config
 {
-  "mcpServers": {
-    "harvest-mcp": {
-      "command": "harvest-mcp",
-      "args": []
+  "harvest": {
+    "command": "harvest-mcp",
+    "env": {
+      "HARVEST_API_KEY": "your-key"
     }
   }
 }
 ```
 
-Available tools: `harvest_scrape`, `harvest_extract`, `harvest_contacts`, `harvest_batch`, `harvest_stats`, `denseforge_search`, `denseforge_ingest`
-
----
-
-## 🔥 Killer Feature: P2P Data Network
-
-**This is what makes Harvest unique.** No other scraping tool has this.
-
-```
-Traditional:
-  You scrape → You pay → You store → You forget
-
-Harvest P2P:
-  You scrape → Cache shared with network → Others benefit → Everyone wins
-```
-
-### How P2P Works
-
-```
-┌─────────────────────────────────────────────┐
-│           Harvest P2P Network                │
-│                                              │
-│  ┌──────┐   ┌──────┐   ┌──────┐             │
-│  │Node A│←→│Node B│←→│Node C│   ← Peers     │
-│  └──┬───┘   └──┬───┘   └──┬───┘             │
-│     │          │          │                  │
-│     ▼          ▼          ▼                  │
-│  ┌──────────────────────────────┐            │
-│  │     Shared Cache Layer       │            │
-│  │  - TTL-based expiration      │            │
-│  │  - Content hashing           │            │
-│  │  - Selective sharing         │            │
-│  │  - Zero-knowledge proofs     │            │
-│  └──────────────────────────────┘            │
-│                                              │
-│  Request flow:                               │
-│  1. Check local cache                        │
-│  2. Query P2P network (fast)                 │
-│  3. If miss → scrape + share                 │
-│  4. Result cached for everyone               │
-└─────────────────────────────────────────────┘
-```
-
-### Why P2P Changes Everything
-
-| Scenario | Without P2P | With P2P |
-|---|---|---|
-| 100 users scrape same site | 100× requests (slow, expensive) | 1 request + 99 cache hits |
-| New data appears | Everyone rescrapes | First node shares, rest fetch |
-| API rate limits | Hit by everyone | Distributed across network |
-| Data freshness | Manual refresh | TTL + auto-invalidation |
-
-**P2P compensates for individual limitations.** Even if your scraper is small, the network's collective scraping power is massive.
-
----
-
-## 📦 Core Features
-
-### 🕷️ Smart Scraping
-- Anti-bot bypass (Cloudflare, DataDome, etc.)
-- JavaScript rendering
-- Metadata extraction
-- Batch processing with rate limiting
-
-### 🧠 Semantic Memory (Optional — with DenseForge)
-- Triple hybrid search (keyword + vector + BM25)
-- RRF fusion for better results
-- Ask "why" and "what if" questions
-- Persistent memory across sessions
-
-### 🔗 MCP Integration
-- 17 tools for AI agents
-- Works with Claude, Cursor, Hermes, any MCP client
-- Unified interface for scraping + memory
-
-### 📊 Compliance & Security
-- robots.txt respect
-- GDPR-aware data handling
-- SSRF protection
-- Rate limiting
-
----
-
-## 🛠️ Installation
-
-```bash
-# Basic
-pip install harvest-agent
-
-# With semantic memory (optional)
-pip install harvest-agent[denseforge]
-
-# Development
-git clone https://github.com/zad111ak-ai/harvest
-cd harvest
-pip install -e ".[dev]"
-```
-
----
-
-## 📖 Usage Examples
-
-### Basic Scraping
-```python
-from harvest import Harvest, CrawlConfig
-
-config = CrawlConfig(
-    max_concurrent=5,
-    respect_robots_txt=True
-)
-
-h = Harvest(config)
-result = h.scrape("https://news.ycombinator.com")
-
-print(result.markdown)  # Clean markdown
-print(result.metadata)  # Title, links, etc.
-```
-
-### Batch Processing
-```python
-urls = [
-    "https://example.com/page1",
-    "https://example.com/page2",
-    "https://example.com/page3"
-]
-
-results = h.batch_scrape(urls, max_concurrent=3)
-for result in results:
-    print(f"{result.url}: {len(result.markdown)} chars")
-```
-
-### Contact Extraction
-```python
-from harvest import Harvest
-
-h = Harvest()
-result = h.scrape("https://company-website.com/contact")
-
-contacts = h.extract_contacts(result)
-print(contacts.emails)    # ['info@company.com']
-print(contacts.phones)    # ['+1-555-0123']
-print(contacts.socials)   # ['linkedin.com/company']
-```
-
-### With DenseForge (Optional)
-```python
-from harvest import Harvest
-from harvest.integrations.denseforge import DenseForgeBridge
-
-# Scrape
-h = Harvest()
-result = h.scrape("https://docs.python.org/3/tutorial")
-
-# Store in semantic memory
-bridge = DenseForgeBridge()
-bridge.store(result.markdown, metadata={"source": result.url})
-
-# Search later
-results = bridge.search("how to use classes")
-```
-
----
-
-## 🏗️ Architecture
+## 📦 Architecture
 
 ```
 harvest/
-├── __init__.py          # Main Harvest class
-├── core.py              # Core scraping logic
-├── security.py          # SSRF protection, rate limiting
-├── compliance.py        # GDPR, robots.txt
-├── api_detector.py      # API endpoint discovery
-├── mcp_server.py        # MCP integration (17 tools)
-├── p2p/                 # P2P network module
-│   ├── __init__.py
-│   ├── node.py          # P2P node implementation
-│   ├── cache.py         # Shared cache layer
-│   └── sync.py          # Synchronization protocol
+├── core.py           # Main Harvest class
+├── cache.py          # Local cache (SQLite)
+├── p2p/              # P2P network layer
+│   ├── node.py       # WebSocket peer
+│   ├── error_handler.py
+│   └── bootstrap_server.py
+├── p2p_network.py    # P2P cache network
+├── security.py       # SSRF protection, auth
+├── mcp_server.py     # MCP protocol server
 └── integrations/
-    └── denseforge.py    # DenseForge bridge (optional)
+    └── denseforge.py # DenseForge bridge
 ```
 
----
+## 🌐 P2P Network
+
+Harvest uses a **decentralized cache network**. Each node = client + server. When you scrape a page, the result is shared with peers. When you need data, check the network first.
+
+```mermaid
+graph LR
+    A[Your Node] --> B[Peer 1]
+    A --> C[Peer 2]
+    A --> D[Peer 3]
+    B --> E[Shared Cache]
+    C --> E
+    D --> E
+```
+
+**Benefits:**
+- 50-90% fewer API calls
+- Faster responses (cache hits)
+- No central point of failure
+- Privacy-first (selective sharing)
+
+## 🔌 MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `harvest_scrape` | Scrape a URL |
+| `harvest_extract` | Extract structured data |
+| `harvest_crawl` | Crawl multiple pages |
+| `harvest_contacts` | Extract contact info |
+| `harvest_batch` | Batch scrape multiple URLs |
+| `denseforge_search` | Search semantic memory |
+| `denseforge_ingest` | Store data in memory |
+| `denseforge_ask_why` | Ask why something happened |
+| `denseforge_stats` | Get memory statistics |
+
+## 🧪 Testing
+
+```bash
+# Run all tests
+pytest tests/
+
+# Run specific test suite
+pytest tests/test_p2p.py      # 43 tests
+pytest tests/test_security.py # 29 tests
+```
+
+**Test Coverage:** 72 tests across P2P, security, and cache modules.
 
 ## 🤝 Contributing
 
@@ -284,9 +184,9 @@ MIT License — use it however you want.
 If Harvest saves you time/money, consider buying me a coffee:
 
 <p align="center">
-  <a href="bitcoin:bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j"><img src="https://img.shields.io/badge/BTC-bc1qd8sa7e-FF9900?logo=bitcoin&logoColor=white" alt="BTC"></a>
-  <a href="ethereum:0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3"><img src="https://img.shields.io/badge/ETH-0xD26f0efE-627EEA?logo=ethereum&logoColor=white" alt="ETH"></a>
-  <a href="https://tonkeeper.com"><img src="https://img.shields.io/badge/USDT_%28TON%29-UQ...DP-26A17B?logo=tether&logoColor=white" alt="USDT TON"></a>
+  <a href="bitcoin:bc1qd8sa7e4f696wmcyszuxh9snqt2n66zrhz9g80j"><img src="https://img.shields.io/badge/BTC-bc1qd8sa7e-FF9900?logo=bitcoin&logoColor=white" alt="BTC"></a>&nbsp;
+  <a href="ethereum:0xD26f0efE6A8F11e127c3Af3D6163BD458a1693c3"><img src="https://img.shields.io/badge/ETH-0xD26f0efE-627EEA?logo=ethereum&logoColor=white" alt="ETH"></a>&nbsp;
+  <a href="https://tonkeeper.com"><img src="https://img.shields.io/badge/USDT_%28TON%29-UQ...DP-26A17B?logo=tether&logoColor=white" alt="USDT TON"></a>&nbsp;
   <a href="https://phantom.app"><img src="https://img.shields.io/badge/SOL-99EtqBV...JK-9945FF?logo=solana&logoColor=white" alt="SOL"></a>
 </p>
 
