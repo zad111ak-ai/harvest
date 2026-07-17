@@ -11,7 +11,14 @@ Usage:
     await node.start()
 """
 
-from .node import P2PNode
+from .node import P2PNode, P2PConfig, compute_content_hash, verify_content_hash
 from .error_handler import P2PErrorHandler, p2p_fallback
 
-__all__ = ["P2PNode", "P2PConfig", "P2PErrorHandler", "p2p_fallback"]
+__all__ = [
+    "P2PNode",
+    "P2PConfig",
+    "compute_content_hash",
+    "verify_content_hash",
+    "P2PErrorHandler",
+    "p2p_fallback",
+]

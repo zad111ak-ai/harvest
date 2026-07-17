@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 
 import pytest
-
 from harvest.cache import ResponseCache
 from harvest.p2p.node import P2PNode, P2PConfig, PeerInfo
 from harvest.p2p.error_handler import P2PErrorHandler, p2p_fallback
@@ -418,3 +418,62 @@ class TestStalePeerPruning:
         stale_ids = [pid for pid, p in node.peers.items() if time.time() - p.last_seen > 600]
         assert "stale" in stale_ids
         assert "fresh" not in stale_ids
+
+
+# ── End-to-End Integration Test ───────────────────────────────
+
+
+class TestP2PEndToEnd:
+    """End-to-end tests: two nodes connecting and sharing cache."""
+
+    @pytest.mark.asyncio
+    async def test_two_nodes_connect(self) -> None:
+        """Node A starts, Node B connects to it via hello."""
+        node_a = P2PNode(P2PConfig(port=18800, enabled=True, bootstrap_peers=[]))
+        node_b = P2PNode(P2PConfig(port=18801, enabled=True, bootstrap_peers=[]))
+        try:
+            await node_a.start()
+            await node_b.start()
+            # B connects to A
+            await node_b._connect_to_peer(f"ws://127.0.0.1:{node_a.config.port}")
+            # Wait for handshake
+            for _ in range(10):
+                await asyncio.sleep(0.2)
+                if node_a.peer_id in node_b.peers or node_b.peer_id in node_a.peers:
+                    break
+            assert node_a.peer_id in node_b.peers or node_b.peer_id in node_a.peers
+        finally:
+            await node_a.stop()
+            await node_b.stop()
+
+    @pytest.mark.asyncio
+    async def test_cache_hit_after_set(self) -> None:
+        """P2PCacheNetwork set + get (local path) returns data."""
+        cache = ResponseCache()
+        net = P2PCacheNetwork(cache)
+        net.set("https://example.com", "price", {"value": 42})
+        result = net.get("https://example.com", "price")
+        assert result == {"value": 42}
+
+    @pytest.mark.asyncio
+    async def test_content_hash_e2e(self) -> None:
+        """Full flow: set → compute hash → broadcast → verify."""
+        from harvest.p2p.node import compute_content_hash
+
+        cache = ResponseCache()
+        net = P2PCacheNetwork(cache)
+        data = {"price": 42, "token": "ETH"}
+        net.set("https://example.com", "price", data)
+
+        # Verify local cache entry has data
+        result = net.get("https://example.com", "price")
+        assert result == data
+
+        # Compute hash and verify integrity
+        h = compute_content_hash(data)
+        entry = {"data": data, "content_hash": h, "timestamp": time.time()}
+        assert net._verify_entry(entry) is True
+
+        # Tamper detection
+        bad_entry = {"data": {"price": 99}, "content_hash": h, "timestamp": time.time()}
+        assert net._verify_entry(bad_entry) is False
