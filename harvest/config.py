@@ -26,6 +26,9 @@ DEFAULT_CONFIG = {
         "retries": 3,
         "retry_delay": 2.0,
     },
+    "scraper": {
+        "backend": "scrapling",  # "scrapling" (default) or "crawl4ai"
+    },
     "notify": {
         "telegram_token": "",
         "telegram_chat_id": "",

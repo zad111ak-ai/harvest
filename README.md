@@ -40,11 +40,17 @@ Harvest is a **web scraping toolkit designed for AI agents**. It's not just anot
 - **🧠 Semantic Memory** — integrates with DenseForge for persistent agent memory
 - **🔌 MCP Protocol** — 17 tools for AI agents
 - **📊 Analytics** — track scraping success, costs, and performance
+- **⚡ Dual Backend** — Scrapling (lightweight) or Crawl4AI (73K+ ⭐, production-grade)
 
 ## 🚀 Quick Start
 
 ```bash
 pip install harvest-agent
+```
+
+**With Crawl4AI backend** (production-grade anti-bot + deep crawl):
+```bash
+pip install harvest-agent[crawl4ai]
 ```
 
 ```python

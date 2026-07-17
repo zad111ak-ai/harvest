@@ -16,7 +16,8 @@ setup(
         "httpx>=0.27",
     ],
     extras_require={
-        "all": ["scrapling[all]>=0.4.9"],
+        "crawl4ai": ["crawl4ai>=0.9.0"],
+        "all": ["scrapling[all]>=0.4.9", "crawl4ai>=0.9.0"],
     },
     python_requires=">=3.10",
     entry_points={
